@@ -2,8 +2,9 @@
 // import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 // import { SignedIn, SignedOut, RedirectToSignIn, useClerk } from '@clerk/clerk-react';
 // import HomePage from './pages/HomePage';
-// import HostPage from './pages/HostPage';
-// import UserPage from './pages/UserPage';
+// import CreateRoomPage from './pages/CreateRoomPage';
+// import JoinRoomPage from './pages/JoinRoomPage';
+// import RoomPage from './pages/RoomPage';
 
 // const Navigation = () => {
 //   const navigate = useNavigate();
@@ -31,21 +32,23 @@
 //       <Routes>
 //         {/* Public routes */}
 //         <Route path="/" element={<HomePage />} />
+//         <Route path="/create-room" element={<CreateRoomPage />} />
+//         <Route path="/join-room" element={<JoinRoomPage />} />
 
 //         {/* Protected routes */}
 //         <Route
-//           path="/host/:roomId"
+//           path="/room/:roomId"
 //           element={
 //             <SignedIn>
-//               <HostPage />
+//               <RoomPage role="participant" />
 //             </SignedIn>
 //           }
 //         />
 //         <Route
-//           path="/user/:roomId"
+//           path="/host/:roomId"
 //           element={
 //             <SignedIn>
-//               <UserPage />
+//               <RoomPage role="host" />
 //             </SignedIn>
 //           }
 //         />
@@ -102,6 +105,7 @@ const App = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/create-room" element={<CreateRoomPage />} />
         <Route path="/join-room" element={<JoinRoomPage />} />
+        <Route path="/join-room/:roomId" element={<JoinRoomPage />} />
 
         {/* Protected routes */}
         <Route

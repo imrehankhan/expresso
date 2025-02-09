@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const JoinRoomPage = () => {
-  const [roomId, setRoomId] = useState('');
+  const { roomId: qrRoomId } = useParams();
+  const [roomId, setRoomId] = useState(qrRoomId || '');
   const navigate = useNavigate();
 
   const handleJoinRoom = () => {
