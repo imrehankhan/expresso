@@ -1,7 +1,7 @@
 import { io } from 'socket.io-client';
 
 // http://localhost:3000
-const socket = io('https://render-test-0i8l.onrender.com', {
+const socket = io('http://localhost:3000', {
   withCredentials: true,
 });
 
