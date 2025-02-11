@@ -39,10 +39,14 @@ const handleSocketConnection = (io, socket) => {
     }
   });
 
+  socket.on('closeRoom', async (roomId) => {
+    await Doubt.deleteMany({ roomId });
+    io.to(roomId).emit('roomClosed'); // Broadcast to all clients in the room
+  });
+
   socket.on('disconnect', () => {
     console.log('Client disconnected');
   });
 };
 
 module.exports = handleSocketConnection;
-
