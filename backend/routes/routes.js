@@ -30,5 +30,14 @@ router.delete('/rooms/:roomId', async (req, res) => {
   res.status(200).send({ message: 'Room closed and doubts deleted' });
 });
 
+// fetch all doubts (Natural language processing library ke liye kaam ata re ye)
+router.get('/doubts', async (req, res) => {
+  const doubts = await Doubt.find();
+  res.status(200).send(doubts);
+});
+
 module.exports = router;
+
+
+
 

@@ -6,10 +6,11 @@ import QRCode from 'react-qr-code';
 import { FaCopy, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import axios from 'axios'; // Ensure axios is imported
+import axios from 'axios';
+import stringSimilarity from 'string-similarity';
 import { createRoom, submitDoubt, getDoubts } from '../utils/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL; // Add this line
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const RoomPage = ({ role }) => {
   const { roomId } = useParams();
@@ -17,10 +18,11 @@ const RoomPage = ({ role }) => {
   const { user } = useUser();
   const [doubts, setDoubts] = useState([]);
   const [newDoubt, setNewDoubt] = useState('');
+  const [similarity, setSimilarity] = useState(0);
   const [upvotedDoubts, setUpvotedDoubts] = useState(new Set(JSON.parse(localStorage.getItem('upvotedDoubts') || '[]')));
   const [visibleEmails, setVisibleEmails] = useState(new Set());
-  const [isRoomClosed, setIsRoomClosed] = useState(false); // Add state to track room closure
-  const [roomClosureMessage, setRoomClosureMessage] = useState(''); // Add state for room closure message
+  const [isRoomClosed, setIsRoomClosed] = useState(false);
+  const [roomClosureMessage, setRoomClosureMessage] = useState('');
 
   useEffect(() => {
     socket.emit('joinRoom', roomId, role);
@@ -52,8 +54,8 @@ const RoomPage = ({ role }) => {
     });
 
     socket.on('roomClosed', () => {
-      setIsRoomClosed(true); // Set room as closed
-      setRoomClosureMessage('The room was closed, kindly leave the room'); // Set room closure message
+      setIsRoomClosed(true);
+      setRoomClosureMessage('The room was closed, kindly leave the room');
       toast.error('Room was closed, kindly leave the room');
     });
 
@@ -66,15 +68,26 @@ const RoomPage = ({ role }) => {
     };
   }, [roomId, role, user.id, navigate]);
 
+  useEffect(() => {
+    const fetchDoubts = async () => {
+      const response = await axios.get(`${API_BASE_URL}/doubts`);
+      setDoubts(response.data);
+    };
+
+    fetchDoubts();
+  }, []);
+
   const handleAddDoubt = () => {
     const doubt = {
       id: Math.random().toString(36).substring(2, 15),
       text: newDoubt,
-      user: user.primaryEmailAddress.emailAddress, // Ensure the email is retrieved from Clerk
+      user: user.primaryEmailAddress.emailAddress,
       upvotes: 0,
+      createdAt: new Date().toISOString(), // Add createdAt field
     };
     socket.emit('newDoubt', roomId, doubt);
     setNewDoubt('');
+    setSimilarity(0); // Reset similarity percentage to 0.00%
   };
 
   const handleToggleUpvote = (id) => {
@@ -123,32 +136,53 @@ const RoomPage = ({ role }) => {
     navigate('/');
   };
 
-  const topDoubts = doubts.sort((a, b) => b.upvotes - a.upvotes).slice(0, 3);
+  const handleDoubtChange = (e) => {
+    const newDoubtText = e.target.value;
+    setNewDoubt(newDoubtText);
+
+    if (newDoubtText.trim() === '') {
+      setSimilarity(0);
+      return;
+    }
+
+    const existingDoubtTexts = doubts.map(doubt => doubt.text);
+    const bestMatch = stringSimilarity.findBestMatch(newDoubtText, existingDoubtTexts);
+    setSimilarity(bestMatch.bestMatch.rating * 100);
+  };
+
+  // Sort doubts by upvotes and then by creation time
+  const sortedDoubts = doubts.sort((a, b) => {
+    if (b.upvotes === a.upvotes) {
+      return new Date(a.createdAt) - new Date(b.createdAt);
+    }
+    return b.upvotes - a.upvotes;
+  });
 
   return (
     <div className='flex flex-col items-center mt-40'>
       <h1 className='text-5xl'>Room ID: {roomId}<FaCopy onClick={handleCopyRoomId} className='cursor-pointer inline-block ml-2 text-3xl' /></h1>
-      {roomClosureMessage && <p className='text-xl text-red-600'>{roomClosureMessage}</p>} {/* Display room closure message */}
+      {roomClosureMessage && <p className='text-xl text-red-600'>{roomClosureMessage}</p>}
       {role !== 'participant' && (
         <div className='flex flex-col items-center justify-center mt-10'>
-          <QRCode className='mb-5' value={`http://localhost:5173/join-room/${roomId}`} />
+          <QRCode className='mb-5' value={`http://localhost:5173/room/${roomId}`} />
           <p className='text-2xl text-center'>Share this QR code with users to join the room.</p>
         </div>
       )}
       {role === 'participant' && (
-        <div className='mt-10'>
+        <div className='mt-10 flex flex-col items-center gap-3'>
           <input
             type='text'
             value={newDoubt}
-            onChange={(e) => setNewDoubt(e.target.value)}
+            onChange={handleDoubtChange}
             placeholder='Enter your doubt'
             className='p-2 border-2 border-black rounded-lg'
-            disabled={isRoomClosed} // Disable input if room is closed
+            disabled={isRoomClosed}
           />
+          <p>Your doubt is {similarity.toFixed(2)}% similar to a previously asked one</p>
           <button
             onClick={handleAddDoubt}
             className='ml-2 text-2xl bg-blue-600 hover:bg-blue-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'
-            disabled={isRoomClosed} // Disable button if room is closed
+            disabled={isRoomClosed}
           >
             Add Doubt
           </button>
@@ -162,7 +196,7 @@ const RoomPage = ({ role }) => {
       )}
       <div className='mt-10'>
         <h2 className='text-3xl'>Doubts</h2>
-        {doubts.map(doubt => (
+        {sortedDoubts.map(doubt => (
           <div key={doubt.id} className='mt-5 p-2 border-2 border-black rounded-lg'>
             <p>{doubt.text}</p>
             {role === 'host' && (
@@ -183,26 +217,6 @@ const RoomPage = ({ role }) => {
             >
               {upvotedDoubts.has(doubt.id) ? 'Undo Upvote' : 'Upvote'}
             </button>
-          </div>
-        ))}
-      </div>
-      <div className='mt-10'>
-        <h2 className='text-3xl'>Top Doubts</h2>
-        {topDoubts.map(doubt => (
-          <div key={doubt.id} className='mt-5 p-2 border-2 border-black rounded-lg'>
-            <p>{doubt.text}</p>
-            {role === 'host' && (
-              <div className='flex items-center'>
-                <button
-                  onClick={() => handleToggleEmailVisibility(doubt.id)}
-                  className='text-xl bg-gray-600 hover:bg-gray-700 cursor-pointer p-1 rounded-lg text-white border-2 border-black ml-2'
-                >
-                  {visibleEmails.has(doubt.id) ? <FaEyeSlash /> : <FaEye />}
-                </button>
-                {visibleEmails.has(doubt.id) && <p className='text-xl'>{doubt.user}</p>}
-              </div>
-            )}
-            <p>Upvotes: {doubt.upvotes}</p>
           </div>
         ))}
       </div>

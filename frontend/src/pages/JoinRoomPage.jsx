@@ -27,3 +27,4 @@ const JoinRoomPage = () => {
 };
 
 export default JoinRoomPage;
+
