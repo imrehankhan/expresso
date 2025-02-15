@@ -27,7 +27,9 @@ app.use('/api', routes); // Use routes with /api prefix
 
 // Connect to MongoDB Atlas
 const mongoUri = 'mongodb+srv://rehankhan:rehankhan7089@cluster0.mccpv.mongodb.net/'; // Replace with your MongoDB connection string
-mongoose.connect(mongoUri);
+mongoose.connect(mongoUri)
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.log(err));
 
 io.on('connection', (socket) => {
   console.log('New client connected');
