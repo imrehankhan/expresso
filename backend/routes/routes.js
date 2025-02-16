@@ -54,4 +54,3 @@ router.get('/rooms/:roomId', async (req, res) => {
 
 module.exports = router;
 
-

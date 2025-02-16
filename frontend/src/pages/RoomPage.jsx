@@ -70,12 +70,12 @@ const RoomPage = ({ role }) => {
 
   useEffect(() => {
     const fetchDoubts = async () => {
-      const response = await axios.get(`${API_BASE_URL}/doubts`);
+      const response = await axios.get(`${API_BASE_URL}/rooms/${roomId}/doubts`);
       setDoubts(response.data);
     };
 
     fetchDoubts();
-  }, []);
+  }, [roomId]);
 
   const handleAddDoubt = () => {
     const doubt = {
