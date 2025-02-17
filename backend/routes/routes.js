@@ -15,7 +15,7 @@ router.post('/rooms', async (req, res) => {
 // doubt submit karne ke liye route
 router.post('/doubts', async (req, res) => {
   const { roomId, text, user } = req.body;
-  const doubt = new Doubt({ roomId, text, user, upvotes: 0, upvotedBy: [] });
+  const doubt = new Doubt({ roomId, text, user, upvotes: 0, upvotedBy: [], answered: false });
   await doubt.save();
   res.status(201).send(doubt);
 });
@@ -53,4 +53,3 @@ router.get('/rooms/:roomId', async (req, res) => {
 });
 
 module.exports = router;
-

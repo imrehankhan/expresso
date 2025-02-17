@@ -39,6 +39,15 @@ const handleSocketConnection = (io, socket) => {
     }
   });
 
+  socket.on('markAsAnswered', async (roomId, doubtId) => {
+    const doubt = await Doubt.findOne({ roomId, id: doubtId });
+    if (doubt) {
+      doubt.answered = !doubt.answered;
+      await doubt.save();
+      io.to(roomId).emit('markAsAnswered', doubtId, doubt.answered); // Broadcast to all clients in the room
+    }
+  });
+
   socket.on('closeRoom', async (roomId) => {
     await Doubt.deleteMany({ roomId });
     io.to(roomId).emit('roomClosed'); // Broadcast to all clients in the room
