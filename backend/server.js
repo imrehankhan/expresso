@@ -5,19 +5,20 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const handleSocketConnection = require('./controllers/socketController');
 const routes = require('./routes/routes'); // Import routes
+require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: 'http://localhost:5173', // Specify the allowed origin
+    origin: 'http://192.168.1.100:5173', // Specify the allowed origin
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow DELETE method
     credentials: true, // Allow credentials
   },
 });
 
 app.use(cors({
-  origin: 'http://localhost:5173', // Specify the allowed origin
+  origin: 'http://192.168.1.100:5173', // Specify the allowed origin
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow DELETE method
   credentials: true, // Allow credentials
 }));
@@ -26,7 +27,7 @@ app.use(express.json()); // Middleware to parse JSON bodies
 app.use('/api', routes); // Use routes with /api prefix
 
 // Connect to MongoDB Atlas
-const mongoUri = 'mongodb+srv://rehankhan:rehankhan7089@cluster0.mccpv.mongodb.net/'; // Replace with your MongoDB connection string
+const mongoUri = process.env.MONGO_URI; // Use MONGO_URI from .env file
 mongoose.connect(mongoUri)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log(err));
