@@ -31,7 +31,7 @@ const CreateRoomPage = () => {
 
   return (
     <div className='flex flex-col items-center mt-40'>
-      <h1 className='text-5xl'>Create a Room</h1>
+      <h1 className='text-3xl md:text-5xl'>Create a Room</h1>
       <button onClick={handleCreateRoom} className='mt-10 text-2xl bg-blue-600 hover:bg-blue-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'>Create Room</button>
       {/* {roomId && (
         <div className='mt-10'>

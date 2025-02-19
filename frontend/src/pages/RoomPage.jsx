@@ -210,12 +210,12 @@ const RoomPage = ({ role }) => {
 
   return (
     <div className='flex flex-col items-center mt-40'>
-      <h1 className='text-5xl'>Room ID: {roomId}<FaCopy onClick={handleCopyRoomId} className='cursor-pointer inline-block ml-2 text-3xl' /></h1>
+      <h1 className='text-3xl md:text-5xl text-center'>Room ID: {roomId}<FaCopy onClick={handleCopyRoomId} className='cursor-pointer inline-block ml-2 text-3xl' /></h1>
       {roomClosureMessage && <p className='text-xl text-red-600'>{roomClosureMessage}</p>}
       {role !== 'participant' && (
         <div className='flex flex-col items-center justify-center mt-10'>
           <QRCode className='mb-5' value={`http://192.168.4.217:5173/room/${roomId}`} />
-          <p className='text-2xl text-center'>Share this QR code with users to join the room.</p>
+          <p className='text-lg md:text-2xl text-center'>Share this QR code with users to join the room.</p>
         </div>
       )}
       {role === 'participant' && (
@@ -244,7 +244,7 @@ const RoomPage = ({ role }) => {
       {role !== 'host' && (
         <button onClick={handleLeaveRoom} className='mt-5 text-2xl bg-gray-600 hover:bg-gray-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'>Leave Room</button>
       )}
-      <div className='mt-10 h-96 overflow-y-scroll w-full max-w-2xl border border-black rounded-lg mb-20'>
+      <div className='mt-10 h-96 overflow-y-scroll w-72 md:w-full max-w-2xl border border-black rounded-lg mb-20'>
         <h2 className='text-3xl text-center'>Doubts</h2>
         {sortedDoubts.map(doubt => (
           <div key={doubt.id} className={`mt-5 p-2 border-2 border-black rounded-lg ${doubt.answered ? 'line-through' : ''}`}>

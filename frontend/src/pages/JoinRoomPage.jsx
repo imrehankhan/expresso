@@ -25,7 +25,7 @@ const JoinRoomPage = () => {
 
   return (
     <div className="flex flex-col items-center mt-40">
-      <h1 className="text-5xl">Join Room</h1>
+      <h1 className="text-3xl">Enter roomId or scan QR code provided by the host</h1>
       <input
         type="text"
         value={roomId}

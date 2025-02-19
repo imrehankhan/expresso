@@ -99,7 +99,7 @@ const Navigation = () => {
 
   return (
     <nav className='flex justify-center text-5xl mt-5'>
-      <Link to="/"><span className='text-orange-500'>Un</span>Doubt</Link>
+      <Link className='mt-10 md:mt-0' to="/"><span className='text-orange-500'>Un</span>Doubt</Link>
       <SignedIn>
         {!hideLogoutButton && (
           <button className='text-red-500 border-2 border-red rounded text-xl hover:bg-red-500 hover:text-white p-1 cursor-pointer absolute top-0 right-0 mt-2 mr-2 hover:border-black' onClick={handleLogout}>Logout</button>
@@ -112,7 +112,7 @@ const Navigation = () => {
 const SignInPage = () => (
   <div className="flex flex-col items-center mt-20">
       <Link className='text-5xl mb-20' to="/"><span className='text-orange-500'>Un</span>Doubt</Link>
-      <h2 className="text-2xl mb-4">Please sign in with your college mail ID</h2>
+      <h2 className="text-xl mb-4 text-center">Please sign in with your college mail ID</h2>
     <SignIn />
   </div>
 );

@@ -24,10 +24,10 @@ const HomePage = () => {
       <SignedIn>
         {user && (
           <div className='flex flex-col items-center'>
-            <p className='text-6xl'>Welcome, {user.lastName}!</p>
+            <p className='text-3xl md:text-6xl text-center'>Welcome, {user.lastName}!</p>
             <div className='flex flex-row justify-center items-center mt-30'>
-              <button onClick={handleCreateRoom} className='border-2 hover:text-white me-5 text-2xl bg-white hover:bg-blue-700 cursor-pointer p-2 rounded-lg text-black hover:border-black'>Create Room</button>
-              <button onClick={handleJoinRoom} className='me-5 text-2xl bg-blue-600 hover:bg-blue-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'>Join Room</button>
+              <button onClick={handleCreateRoom} className='border-2 hover:text-white me-5 md:text-2xl bg-white hover:bg-blue-700 cursor-pointer p-2 rounded-lg text-black hover:border-black'>Create Room</button>
+              <button onClick={handleJoinRoom} className='me-5 md:text-2xl bg-blue-600 hover:bg-blue-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'>Join Room</button>
             </div>
           </div>
         )}
