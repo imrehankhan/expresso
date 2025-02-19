@@ -5,3 +5,4 @@ In,
 .env file of backend 
 server.js file 
 RoomPage.jsx file
+socket.js in backend/utils/

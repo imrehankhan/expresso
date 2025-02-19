@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import socket from '../utils/socket';
 import QRCode from 'react-qr-code';
-import { FaCopy, FaEye, FaEyeSlash, FaCheck } from 'react-icons/fa';
+import { FaCopy, FaEye, FaEyeSlash, FaCheck, FaThumbsUp } from 'react-icons/fa';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
@@ -152,8 +152,28 @@ const RoomPage = ({ role }) => {
   };
 
   const handleCopyRoomId = () => {
-    navigator.clipboard.writeText(roomId);
-    toast.success('Room ID copied to clipboard!');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(roomId).then(() => {
+        toast.success('Room ID copied to clipboard!');
+      }).catch((err) => {
+        toast.error('Failed to copy Room ID');
+        console.error('Failed to copy Room ID:', err);
+      });
+    } else {
+      // Fallback method for copying text to clipboard
+      const textArea = document.createElement('textarea');
+      textArea.value = roomId;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        toast.success('Room ID copied to clipboard!');
+      } catch (err) {
+        toast.error('Failed to copy Room ID');
+        console.error('Failed to copy Room ID:', err);
+      }
+      document.body.removeChild(textArea);
+    }
   };
 
   const handleCloseRoom = async () => {
@@ -228,33 +248,37 @@ const RoomPage = ({ role }) => {
         <h2 className='text-3xl text-center'>Doubts</h2>
         {sortedDoubts.map(doubt => (
           <div key={doubt.id} className={`mt-5 p-2 border-2 border-black rounded-lg ${doubt.answered ? 'line-through' : ''}`}>
-            <p>{doubt.text}</p>
-            {role === 'host' && (
-              <div className='flex items-center'>
-                <button
-                  onClick={() => handleToggleEmailVisibility(doubt.id)}
-                  className='text-xl bg-gray-600 hover:bg-gray-700 cursor-pointer p-1 rounded-lg text-white border-2 border-black ml-2'
-                >
-                  {visibleEmails.has(doubt.id) ? <FaEyeSlash /> : <FaEye />}
-                </button>
-                {visibleEmails.has(doubt.id) && <p className='ml-2'>{doubt.user}</p>}
-                {!doubt.answered && (
-                  <button
-                    onClick={() => handleMarkAsAnswered(doubt.id)}
-                    className='text-xl bg-green-600 hover:bg-green-700 cursor-pointer p-1 rounded-lg text-white border-2 border-black ml-2'
-                  >
-                    <FaCheck />
-                  </button>
-                )}
+            <div className='flex justify-between items-center'>
+              <div>
+                <p>{doubt.text}</p>
+                <p>Upvotes: {doubt.upvotes}</p>
               </div>
-            )}
-            <p>Upvotes: {doubt.upvotes}</p>
-            <button
-              onClick={() => handleToggleUpvote(doubt.id)}
-              className={`text-xl ${upvotedDoubts.has(doubt.id) ? 'bg-red-600' : 'bg-blue-600'} hover:bg-blue-700 cursor-pointer p-1 rounded-lg text-white border-2 border-black`}
-            >
-              {upvotedDoubts.has(doubt.id) ? 'Undo Upvote' : 'Upvote'}
-            </button>
+              <div className='flex items-center'>
+                {role === 'host' && (
+                  <>
+                    <button
+                      onClick={() => handleToggleEmailVisibility(doubt.id)}
+                      className='text-xl bg-gray-600 hover:bg-gray-700 cursor-pointer p-1 rounded-lg text-white border-2 border-black ml-2'
+                    >
+                      {visibleEmails.has(doubt.id) ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                    {visibleEmails.has(doubt.id) && <p className='ml-2'>{doubt.user}</p>}
+                    {!doubt.answered && (
+                      <button
+                        onClick={() => handleMarkAsAnswered(doubt.id)}
+                        className='text-xl bg-green-600 hover:bg-green-700 cursor-pointer p-1 rounded-lg text-white border-2 border-black ml-2'
+                      >
+                        <FaCheck />
+                      </button>
+                    )}
+                  </>
+                )}
+                <FaThumbsUp
+                  onClick={() => handleToggleUpvote(doubt.id)}
+                  className={`text-xl cursor-pointer ml-2 ${upvotedDoubts.has(doubt.id) ? 'text-blue-600' : 'text-gray-600'}`}
+                />
+              </div>
+            </div>
           </div>
         ))}
       </div>
