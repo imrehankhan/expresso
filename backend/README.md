@@ -6,3 +6,4 @@ In,
 server.js file 
 RoomPage.jsx file
 socket.js in backend/utils/
+socket.js in frontend/utils

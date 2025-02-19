@@ -11,14 +11,14 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: 'http://192.168.1.100:5173', // Specify the allowed origin
+    origin: 'http://192.168.4.217:5173', // Specify the allowed origin
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow DELETE method
     credentials: true, // Allow credentials
   },
 });
 
 app.use(cors({
-  origin: 'http://192.168.1.100:5173', // Specify the allowed origin
+  origin: 'http://192.168.4.217:5173', // Specify the allowed origin
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow DELETE method
   credentials: true, // Allow credentials
 }));

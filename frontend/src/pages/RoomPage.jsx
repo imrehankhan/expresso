@@ -214,7 +214,7 @@ const RoomPage = ({ role }) => {
       {roomClosureMessage && <p className='text-xl text-red-600'>{roomClosureMessage}</p>}
       {role !== 'participant' && (
         <div className='flex flex-col items-center justify-center mt-10'>
-          <QRCode className='mb-5' value={`http://192.168.1.100:5173/room/${roomId}`} />
+          <QRCode className='mb-5' value={`http://192.168.4.217:5173/room/${roomId}`} />
           <p className='text-2xl text-center'>Share this QR code with users to join the room.</p>
         </div>
       )}
