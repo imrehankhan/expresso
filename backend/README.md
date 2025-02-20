@@ -3,8 +3,8 @@ To run project on different devices while being on local host
 In,
 .env file of frontend
 .env file of backend
-RoomPage.jsx file
 
 <!-- server.js file
+RoomPage.jsx file
 socket.js in backend/utils/
 socket.js in frontend/utils -->

@@ -11,6 +11,7 @@ import stringSimilarity from 'string-similarity';
 import { createRoom, submitDoubt, getDoubts } from '../utils/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;
 
 const RoomPage = ({ role }) => {
   const { roomId } = useParams();
@@ -214,7 +215,7 @@ const RoomPage = ({ role }) => {
       {roomClosureMessage && <p className='text-xl text-red-600'>{roomClosureMessage}</p>}
       {role !== 'participant' && (
         <div className='flex flex-col items-center justify-center mt-10'>
-          <QRCode className='mb-5' value={`http://192.168.4.217:5173/room/${roomId}`} />
+          <QRCode className='mb-5' value={`${FRONTEND_URL}/room/${roomId}`} />
           <p className='text-lg md:text-2xl text-center'>Share this QR code with users to join the room.</p>
         </div>
       )}
