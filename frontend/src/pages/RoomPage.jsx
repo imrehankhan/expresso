@@ -210,7 +210,8 @@ const RoomPage = ({ role }) => {
   });
 
   return (
-    <div className='flex flex-col items-center mt-40'>
+    <div className='flex flex-col md:flex-row md:justify-center md:gap-20 items-center mt-30'>
+      <div className='md:flex md:flex-col md:items-center'>
       <h1 className='text-3xl md:text-5xl text-center'>Room ID: {roomId}<FaCopy onClick={handleCopyRoomId} className='cursor-pointer inline-block ml-2 text-3xl' /></h1>
       {roomClosureMessage && <p className='text-xl text-red-600'>{roomClosureMessage}</p>}
       {role !== 'participant' && (
@@ -239,12 +240,15 @@ const RoomPage = ({ role }) => {
           </button>
         </div>
       )}
+      <div className='flex justify-center'>
       {role === 'host' && (
         <button onClick={handleCloseRoom} className='mt-5 text-2xl bg-red-600 hover:bg-red-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'>Close Room</button>
       )}
       {role !== 'host' && (
         <button onClick={handleLeaveRoom} className='mt-5 text-2xl bg-gray-600 hover:bg-gray-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'>Leave Room</button>
       )}
+      </div>
+      </div>
       <div className='mt-10 h-96 overflow-y-scroll w-72 md:w-full max-w-2xl border border-black rounded-lg mb-20'>
         <h2 className='text-3xl text-center'>Doubts</h2>
         {sortedDoubts.map(doubt => (
