@@ -25,13 +25,13 @@ const JoinRoomPage = () => {
 
   return (
     <div className="flex flex-col items-center mt-40">
-      <h1 className="text-3xl">Enter roomId or scan QR code provided by the host</h1>
+      <h1 className="text-3xl text-gray-300">Enter roomId or scan QR code provided by the host</h1>
       <input
         type="text"
         value={roomId}
         onChange={(e) => setRoomId(e.target.value)}
         placeholder="Enter Room ID"
-        className="p-2 border-2 border-black rounded-lg mt-5"
+        className="p-2 border-2 border-gray-300 text-gray-300 rounded-lg mt-5"
       />
       <button
         onClick={handleJoinRoom}

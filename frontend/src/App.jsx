@@ -22,7 +22,7 @@ const Navigation = () => {
 
   return (
     <nav className='flex justify-center text-5xl mt-5'>
-      <Link className='mt-10 md:mt-0' to="/"><span className='text-orange-500'>Un</span>Doubt</Link>
+      <Link className='mt-10 md:mt-0 text-gray-300' to="/"><span className='text-orange-500'>Un</span>Doubt</Link>
       <SignedIn>
         {!hideLogoutButton && (
           <button className='text-red-500 border-2 border-red rounded text-xl hover:bg-red-500 hover:text-white p-1 cursor-pointer absolute top-0 right-0 mt-2 mr-2 hover:border-black' onClick={handleLogout}>Logout</button>
