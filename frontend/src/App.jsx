@@ -16,8 +16,7 @@ const Navigation = () => {
     signOut();
     navigate('/');
   };
-
-  // Hide the logout button on the room creator's page
+  
   const hideLogoutButton = location.pathname.startsWith('/host');
 
   return (
@@ -34,8 +33,8 @@ const Navigation = () => {
 
 const SignInPage = () => (
   <div className="flex flex-col items-center mt-20">
-      <Link className='text-5xl mb-20' to="/"><span className='text-orange-500'>Un</span>Doubt</Link>
-      <h2 className="text-xl mb-4 text-center">Please sign in with your college mail ID</h2>
+      <Link className='text-5xl mb-20 text-gray-300' to="/"><span className='text-orange-500'>Un</span>Doubt</Link>
+      <h2 className="text-xl mb-4 text-center text-gray-200">Please sign in with your college mail ID</h2>
     <SignIn />
   </div>
 );
