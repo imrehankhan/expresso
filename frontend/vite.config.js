@@ -7,6 +7,6 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
-    allowedHosts: ['expresso-frontend.onrender.com']
+    allowedHosts: ['expresso-frontend.onrender.com','undoubt.onrender.com']
   }
 })
