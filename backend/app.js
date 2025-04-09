@@ -9,28 +9,22 @@ require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
 const server = http.createServer(app);
-
-// Configure CORS for Express
-app.use(cors({
-  origin: process.env.VITE_FRONTEND_URL, // Allow requests from the frontend
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
-  credentials: true, // Allow cookies and credentials
-}));
-
-// Configure CORS for Socket.IO
 const io = socketIo(server, {
   cors: {
-    origin: process.env.VITE_FRONTEND_URL, // Allow requests from the frontend
-    methods: ['GET', 'POST'], // Allowed HTTP methods
-    credentials: true, // Allow cookies and credentials
+    origin: [process.env.VITE_FRONTEND_URL], // Specify the allowed origin
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow DELETE method
+    credentials: true, // Allow credentials
   },
 });
 
-// Middleware to parse JSON bodies
-app.use(express.json());
+app.use(cors({
+  origin: process.env.VITE_FRONTEND_URL, // Specify the allowed origin
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow DELETE method
+  credentials: true, // Allow credentials
+}));
 
-// Use routes with /api prefix
-app.use('/api', routes);
+app.use(express.json()); // Middleware to parse JSON bodies
+app.use('/api', routes); // Use routes with /api prefix
 
 // Connect to MongoDB Atlas
 const mongoUri = process.env.MONGO_URI; // Use MONGO_URI from .env file
@@ -38,7 +32,6 @@ mongoose.connect(mongoUri)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log(err));
 
-// Handle Socket.IO connections
 io.on('connection', (socket) => {
   console.log('New client connected');
   handleSocketConnection(io, socket);
@@ -47,6 +40,5 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start the server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
