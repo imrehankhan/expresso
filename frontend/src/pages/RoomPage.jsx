@@ -557,7 +557,7 @@ const toggleQRCode = () => {
       )}
       <div className='flex justify-center'>
       {role !== 'host' && (
-        <button onClick={handleLeaveRoom} className='mt-5 text-2xl bg-gray-600 hover:bg-gray-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'>Leave Room</button>
+        <button onClick={handleLeaveRoom} className='mt-5 mb-5 text-2xl bg-gray-600 hover:bg-gray-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'>Leave Room</button>
       )}
       </div>
       </div>
