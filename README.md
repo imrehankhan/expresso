@@ -1,4 +1,6 @@
-How to run this project locally (Deploying soon....)
+Try it out at: undoubt.onrender.com
+
+To run this project locally,
 
 Change ip addresses to localhost in .env files <br>
 Open two terminals <br>
