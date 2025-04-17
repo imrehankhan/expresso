@@ -209,27 +209,46 @@
 //     return b.upvotes - a.upvotes;
 //   });
 
+//   const [showQRCode, setShowQRCode] = useState(false); // New state for QR code visibility
+
+// const toggleQRCode = () => {
+//   setShowQRCode((prev) => !prev);
+// };
+
 //   return (
-//     <div className='text-white flex flex-col md:flex-row md:justify-center md:gap-20 items-center mt-30'>
+//     <div className='text-white flex flex-col md:flex-col md:justify-center md:gap-20 items-center mt-30'>
 //       <div className='md:flex md:flex-col md:items-center'>
 //       <h1 className='text-3xl md:text-5xl text-center'>Room ID: {roomId}<FaCopy onClick={handleCopyRoomId} className='cursor-pointer inline-block ml-2 text-3xl' /></h1>
 //       {roomClosureMessage && <p className='text-xl text-red-600'>{roomClosureMessage}</p>}
 //       {role !== 'participant' && (
 //         <div className='flex flex-col items-center justify-center mt-10'>
-//           <QRCode className='mb-5' value={`${FRONTEND_URL}/room/${roomId}`} />
-//           <p className='text-lg md:text-2xl text-center'>Share this QR code with users to join the room.</p>
+//           <div className='flex justify-center items-center'>
+//           <button
+//             onClick={toggleQRCode}
+//             className='mb-3 mr-2 text-xl bg-blue-600 hover:bg-blue-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'
+//           >
+//             {showQRCode ? 'Hide QR Code' : 'Show QR Code'}
+//           </button>
+//           <button onClick={handleCloseRoom} className='mb-3 ml-2 text-xl bg-red-600 hover:bg-red-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'>Close Room</button>
+//           </div>
+//           {showQRCode && (
+//             <div className='flex flex-col items-center'>
+//             <QRCode className='mb-5' value={`${FRONTEND_URL}/room/${roomId}`} />
+//             <p className='text-lg md:text-2xl text-center'>Share this QR code with users to join the room.</p>
+//             </div>
+//           )}
+//           {/* <p className='text-lg md:text-2xl text-center'>Share this QR code with users to join the room.</p> */}
 //         </div>
 //       )}
 //       {role === 'participant' && (
 //         <div className='mt-10 flex flex-col items-center gap-3'>
-//           <input
-//             type='text'
+//           <textarea
 //             value={newDoubt}
 //             onChange={handleDoubtChange}
 //             placeholder='Enter your doubt'
-//             className='p-2 border-2 border-black rounded-lg'
+//             className='p-2 border-2 border-black rounded-lg w-full h-24 resize-none'
 //             disabled={isRoomClosed}
-//           />
+//             />
 //           <p>Your doubt is {similarity.toFixed(2)}% similar to a previously asked one</p>
 //           <button
 //             onClick={handleAddDoubt}
@@ -241,50 +260,47 @@
 //         </div>
 //       )}
 //       <div className='flex justify-center'>
-//       {role === 'host' && (
-//         <button onClick={handleCloseRoom} className='mt-5 text-2xl bg-red-600 hover:bg-red-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'>Close Room</button>
-//       )}
 //       {role !== 'host' && (
-//         <button onClick={handleLeaveRoom} className='mt-5 text-2xl bg-gray-600 hover:bg-gray-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'>Leave Room</button>
+//         <button onClick={handleLeaveRoom} className='mt-5 mb-5 text-2xl bg-gray-600 hover:bg-gray-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'>Leave Room</button>
 //       )}
 //       </div>
 //       </div>
-//       <div className='mt-10 h-96 overflow-y-scroll w-72 md:w-full max-w-2xl border border-gray-300 rounded-lg mb-20'>
+//       <div className='mt-2 h-96 overflow-y-scroll w-72 md:w-full max-w-7xl border border-gray-300 rounded-lg mb-20'>
 //         <h2 className='text-3xl text-center'>Doubts</h2>
 //         {sortedDoubts.map(doubt => (
 //           <div key={doubt.id} className={`mt-5 p-2 border-2 border-gray-300 rounded-lg ${doubt.answered ? 'line-through' : ''}`}>
-//             <div className='flex justify-between items-center'>
-//               <div>
-//                 <p>{doubt.text}</p>
-//                 <p>Upvotes: {doubt.upvotes}</p>
-//               </div>
-//               <div className='flex items-center'>
-//                 {role === 'host' && (
-//                   <>
+//           <div className='flex justify-between items-center'>
+//             <div>
+//               <p className='text-2xl break-words overflow-wrap-anywhere'>{doubt.text}</p> {/* Added text wrapping classes */}
+//               <p className='text-orange-500'>Upvotes: {doubt.upvotes}</p>
+//             </div>
+//             <div className='flex items-center'>
+//               {role === 'host' && (
+//                 <>
+//                   <button
+//                     onClick={() => handleToggleEmailVisibility(doubt.id)}
+//                     className='text-xl bg-gray-600 hover:bg-gray-700 cursor-pointer p-1 rounded-lg text-white border-2 border-black ml-2'
+//                   >
+//                     {visibleEmails.has(doubt.id) ? <FaEyeSlash /> : <FaEye />}
+//                   </button>
+//                   {visibleEmails.has(doubt.id) && <p className='ml-2'>{doubt.user}</p>}
+//                   {!doubt.answered && (
 //                     <button
-//                       onClick={() => handleToggleEmailVisibility(doubt.id)}
-//                       className='text-xl bg-gray-600 hover:bg-gray-700 cursor-pointer p-1 rounded-lg text-white border-2 border-black ml-2'
+//                       onClick={() => handleMarkAsAnswered(doubt.id)}
+//                       className='text-xl bg-green-600 hover:bg-green-700 cursor-pointer p-1 rounded-lg text-white border-2 border-black ml-2'
 //                     >
-//                       {visibleEmails.has(doubt.id) ? <FaEyeSlash /> : <FaEye />}
+//                       <FaCheck />
 //                     </button>
-//                     {visibleEmails.has(doubt.id) && <p className='ml-2'>{doubt.user}</p>}
-//                     {!doubt.answered && (
-//                       <button
-//                         onClick={() => handleMarkAsAnswered(doubt.id)}
-//                         className='text-xl bg-green-600 hover:bg-green-700 cursor-pointer p-1 rounded-lg text-white border-2 border-black ml-2'
-//                       >
-//                         <FaCheck />
-//                       </button>
-//                     )}
-//                   </>
-//                 )}
-//                 <FaThumbsUp
-//                   onClick={() => handleToggleUpvote(doubt.id)}
-//                   className={`text-xl cursor-pointer ml-2 ${upvotedDoubts.has(doubt.id) ? 'text-blue-600' : 'text-gray-600'}`}
-//                 />
-//               </div>
+//                   )}
+//                 </>
+//               )}
+//               <FaThumbsUp
+//                 onClick={() => handleToggleUpvote(doubt.id)}
+//                 className={`text-xl cursor-pointer ml-2 ${upvotedDoubts.has(doubt.id) ? 'text-blue-600' : 'text-white'}`}
+//               />
 //             </div>
 //           </div>
+//         </div>
 //         ))}
 //       </div>
 //       <ToastContainer />
@@ -505,14 +521,14 @@ const RoomPage = ({ role }) => {
     return b.upvotes - a.upvotes;
   });
 
-  const [showQRCode, setShowQRCode] = useState(false); // New state for QR code visibility
+  const [showQRCode, setShowQRCode] = useState(true); // New state for QR code visibility
 
 const toggleQRCode = () => {
   setShowQRCode((prev) => !prev);
 };
 
   return (
-    <div className='text-white flex flex-col md:flex-col md:justify-center md:gap-20 items-center mt-30'>
+    <div className='flex flex-col md:flex-col md:justify-center md:gap-20 items-center pt-12 bg-gradient-to-br from-blue-900 via-purple-800 to-black text-white'>
       <div className='md:flex md:flex-col md:items-center'>
       <h1 className='text-3xl md:text-5xl text-center'>Room ID: {roomId}<FaCopy onClick={handleCopyRoomId} className='cursor-pointer inline-block ml-2 text-3xl' /></h1>
       {roomClosureMessage && <p className='text-xl text-red-600'>{roomClosureMessage}</p>}
@@ -521,19 +537,18 @@ const toggleQRCode = () => {
           <div className='flex justify-center items-center'>
           <button
             onClick={toggleQRCode}
-            className='mb-3 mr-2 text-xl bg-blue-600 hover:bg-blue-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'
+            className='px-6 py-3 text-sm md:text-xl font-semibold bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 mr-2'
           >
             {showQRCode ? 'Hide QR Code' : 'Show QR Code'}
           </button>
-          <button onClick={handleCloseRoom} className='mb-3 ml-2 text-xl bg-red-600 hover:bg-red-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'>Close Room</button>
+          <button onClick={handleCloseRoom} className='px-6 py-3 text-sm md:text-xl font-semibold bg-red-600 hover:bg-red-700 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 ml-2'>Close Room</button>
           </div>
           {showQRCode && (
             <div className='flex flex-col items-center'>
-            <QRCode className='mb-5' value={`${FRONTEND_URL}/room/${roomId}`} />
+            <QRCode className='mb-5 mt-5' value={`${FRONTEND_URL}/room/${roomId}`} />
             <p className='text-lg md:text-2xl text-center'>Share this QR code with users to join the room.</p>
             </div>
           )}
-          {/* <p className='text-lg md:text-2xl text-center'>Share this QR code with users to join the room.</p> */}
         </div>
       )}
       {role === 'participant' && (
@@ -541,14 +556,14 @@ const toggleQRCode = () => {
           <textarea
             value={newDoubt}
             onChange={handleDoubtChange}
-            placeholder='Enter your doubt'
-            className='p-2 border-2 border-black rounded-lg w-full h-24 resize-none'
+            placeholder='Enter your doubt...'
+            className='bg-gray-200 p-2 border-2 border-black rounded-lg w-full h-24 resize-none text-black placeholder-gray-500'
             disabled={isRoomClosed}
             />
-          <p>Your doubt is {similarity.toFixed(2)}% similar to a previously asked one</p>
+          <p>Your doubt is <span className='text-emerald-300'>{similarity.toFixed(2)}%</span> similar to a previously asked one</p>
           <button
             onClick={handleAddDoubt}
-            className='ml-2 text-2xl bg-blue-600 hover:bg-blue-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'
+            className='px-6 py-3 text-sm md:text-xl font-semibold bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 md:mr-2 mb-2'
             disabled={isRoomClosed}
           >
             Add Doubt
@@ -557,48 +572,59 @@ const toggleQRCode = () => {
       )}
       <div className='flex justify-center'>
       {role !== 'host' && (
-        <button onClick={handleLeaveRoom} className='mt-5 mb-5 text-2xl bg-gray-600 hover:bg-gray-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'>Leave Room</button>
+        <button onClick={handleLeaveRoom} className='px-6 py-3 text-sm md:text-xl font-semibold bg-red-600 hover:bg-red-700 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 md:mr-2 mt-2'>Leave Room</button>
       )}
       </div>
       </div>
-      <div className='mt-2 h-96 overflow-y-scroll w-72 md:w-full max-w-7xl border border-gray-300 rounded-lg mb-20'>
-        <h2 className='text-3xl text-center'>Doubts</h2>
-        {sortedDoubts.map(doubt => (
-          <div key={doubt.id} className={`mt-5 p-2 border-2 border-gray-300 rounded-lg ${doubt.answered ? 'line-through' : ''}`}>
-          <div className='flex justify-between items-center'>
-            <div>
-              <p className='text-2xl break-words overflow-wrap-anywhere'>{doubt.text}</p> {/* Added text wrapping classes */}
-              <p className='text-orange-500'>Upvotes: {doubt.upvotes}</p>
-            </div>
-            <div className='flex items-center'>
-              {role === 'host' && (
-                <>
+      <div className='mt-2 h-96 overflow-y-scroll w-72 md:w-full max-w-7xl rounded-lg mb-20'>
+  <h2 className='mt-3 text-3xl text-center'>Doubts</h2>
+  {sortedDoubts.length === 0 ? (
+    role === 'participant' ? (<p className=' border border-gray-200 rounded-lg p-4 text-center text-xl text-gray-100 mt-10'>No doubts yet. <span className='text-emerald-300'>Be the first to ask!</span></p>) : (<p className=' rounded-lg p-4 text-center text-xl text-gray-100 mt-10'>No doubts yet.</p>)
+  ) : (
+    sortedDoubts.map((doubt) => (
+      <div
+        key={doubt.id}
+        className={`text-black mt-5 p-2 border-2 bg-gray-200 rounded-lg ${
+          doubt.answered ? 'line-through' : ''
+        }`}
+      >
+        <div className='flex justify-between items-center'>
+          <div>
+            <p className='text-2xl break-words overflow-wrap-anywhere'>{doubt.text}</p>
+            <p className='text-orange-500'>Upvotes: {doubt.upvotes}</p>
+          </div>
+          <div className='flex items-center'>
+            {role === 'host' && (
+              <>
+                <button
+                  onClick={() => handleToggleEmailVisibility(doubt.id)}
+                  className='text-xl bg-gray-600 hover:bg-gray-700 cursor-pointer p-1 rounded-lg text-white border-2 border-black ml-2'
+                >
+                  {visibleEmails.has(doubt.id) ? <FaEyeSlash /> : <FaEye />}
+                </button>
+                {visibleEmails.has(doubt.id) && <p className='ml-2'>{doubt.user}</p>}
+                {!doubt.answered && (
                   <button
-                    onClick={() => handleToggleEmailVisibility(doubt.id)}
-                    className='text-xl bg-gray-600 hover:bg-gray-700 cursor-pointer p-1 rounded-lg text-white border-2 border-black ml-2'
+                    onClick={() => handleMarkAsAnswered(doubt.id)}
+                    className='text-xl bg-green-600 hover:bg-green-700 cursor-pointer p-1 rounded-lg text-white border-2 border-black ml-2'
                   >
-                    {visibleEmails.has(doubt.id) ? <FaEyeSlash /> : <FaEye />}
+                    <FaCheck />
                   </button>
-                  {visibleEmails.has(doubt.id) && <p className='ml-2'>{doubt.user}</p>}
-                  {!doubt.answered && (
-                    <button
-                      onClick={() => handleMarkAsAnswered(doubt.id)}
-                      className='text-xl bg-green-600 hover:bg-green-700 cursor-pointer p-1 rounded-lg text-white border-2 border-black ml-2'
-                    >
-                      <FaCheck />
-                    </button>
-                  )}
-                </>
-              )}
-              <FaThumbsUp
-                onClick={() => handleToggleUpvote(doubt.id)}
-                className={`text-xl cursor-pointer ml-2 ${upvotedDoubts.has(doubt.id) ? 'text-blue-600' : 'text-white'}`}
-              />
-            </div>
+                )}
+              </>
+            )}
+            <FaThumbsUp
+              onClick={() => handleToggleUpvote(doubt.id)}
+              className={`text-xl cursor-pointer ml-2 ${
+                upvotedDoubts.has(doubt.id) ? 'text-blue-600' : 'text-gray-500'
+              }`}
+            />
           </div>
         </div>
-        ))}
       </div>
+    ))
+  )}
+</div>
       <ToastContainer />
     </div>
   );
