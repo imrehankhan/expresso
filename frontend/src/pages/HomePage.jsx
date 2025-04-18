@@ -1,45 +1,3 @@
-// import React from 'react';
-// import { SignedIn, SignedOut, SignIn, useUser } from '@clerk/clerk-react';
-// import { useNavigate } from 'react-router-dom';
-// import './HomePage.css';
-
-// const HomePage = () => {
-//   const { user } = useUser();
-//   const navigate = useNavigate();
-
-//   const handleCreateRoom = () => {
-//     navigate('/create-room');
-//   };
-
-//   const handleJoinRoom = () => {
-//     navigate('/join-room');
-//   };
-
-//   return (
-//     <div>
-//       <div className='flex justify-center items-center mt-40'>
-//         <SignedOut>
-//           <SignIn allowedDomains={['vnrvjiet.in']} />
-//         </SignedOut>
-//       </div>
-//       <SignedIn>
-//         {user && (
-//           <div className='flex flex-col items-center'>
-//             <h1 className='text-3xl md:text-6xl text-center text-white homepage-text'>Welcome, {user.lastName}!</h1>
-//             <div className='flex flex-row justify-center items-center mt-30'>
-//               <button onClick={handleCreateRoom} className='border-2 hover:text-white me-5 md:text-2xl bg-gray-100 hover:bg-blue-700 cursor-pointer p-2 rounded-lg text-black hover:border-black'>Create Room</button>
-//               <button onClick={handleJoinRoom} className='me-5 md:text-2xl bg-blue-600 hover:bg-blue-700 cursor-pointer p-2 rounded-lg text-white border-2 border-black'>Join Room</button>
-//             </div>
-//           </div>
-//         )}
-//       </SignedIn>
-//     </div>
-//   );
-// };
-
-// export default HomePage;
-
-
 import React from 'react';
 import { SignedIn, SignedOut, SignIn, useUser } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
@@ -78,13 +36,13 @@ const HomePage = () => {
         <div className="flex flex-col md:flex-row gap-5">
           <button
             onClick={handleCreateRoom}
-            className="px-6 py-3 text-lg md:text-xl font-semibold bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 flex items-center justify-center"
+            className="px-6 py-3 text-lg md:text-xl font-semibold bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 flex items-center justify-center cursor-pointer"
           >
             <TiUserAddOutline/><span className='ml-1.5'>Create Room</span>
           </button>
           <button
             onClick={handleJoinRoom}
-            className="px-6 py-3 text-lg md:text-xl font-semibold bg-purple-600 hover:bg-purple-700 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 flex items-center justify-center"
+            className="px-6 py-3 text-lg md:text-xl font-semibold bg-purple-600 hover:bg-purple-700 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 flex items-center justify-center cursor-pointer"
           >
             <LuUsersRound/> <span className='ml-2'>Join Room</span>
           </button>
