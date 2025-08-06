@@ -14,6 +14,8 @@ const server = http.createServer(app);
 const allowedOrigins = [
   'https://undoubt.onrender.com', // Frontend URL
   'https://expresso-frontend.onrender.com', // Another frontend URL if applicable
+  'http://192.168.1.100:5173', // Local development frontend
+  'http://localhost:5173', // Local development frontend (localhost)
 ];
 
 // Configure CORS for Express

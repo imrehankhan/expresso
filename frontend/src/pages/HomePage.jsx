@@ -1,12 +1,10 @@
 import React from 'react';
-import { SignedIn, SignedOut, SignIn, useUser } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
 import './HomePage.css';
 import { LuUsersRound } from "react-icons/lu";
 import { TiUserAddOutline } from "react-icons/ti";
 
 const HomePage = () => {
-  const { user } = useUser();
   const navigate = useNavigate();
 
   const handleCreateRoom = () => {
@@ -19,16 +17,9 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-black flex flex-col items-center justify-center text-white">
-  <div className="flex justify-center items-center">
-    <SignedOut>
-      <SignIn allowedDomains={['vnrvjiet.in']} />
-    </SignedOut>
-  </div>
-  <SignedIn>
-    {user && (
       <div className="flex flex-col items-center text-center">
         <h1 className="text-4xl md:text-6xl font-bold mb-6 text-shadow-glow">
-          Welcome, {user.lastName}!
+          Welcome to UnDoubt!
         </h1>
         <p className="text-lg md:text-2xl mb-10">
           Create or join a room to start collaborating with others.
@@ -48,9 +39,7 @@ const HomePage = () => {
           </button>
         </div>
       </div>
-    )}
-  </SignedIn>
-</div>
+    </div>
   );
 };
 
