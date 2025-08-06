@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useUser } from '@clerk/clerk-react';
 import socket from '../utils/socket';
 import QRCode from 'react-qr-code';
 import { FaCopy, FaEye, FaEyeSlash, FaCheck, FaThumbsUp } from 'react-icons/fa';
@@ -16,7 +15,22 @@ const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;
 const RoomPage = ({ role }) => {
   const { roomId } = useParams();
   const navigate = useNavigate();
-  const { user } = useUser();
+
+  // Simple user system to replace Clerk
+  const [user] = useState(() => {
+    let userId = localStorage.getItem('userId');
+    if (!userId) {
+      userId = 'user_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('userId', userId);
+    }
+    return {
+      id: userId,
+      firstName: 'User',
+      lastName: '',
+      emailAddresses: [{ emailAddress: `${userId}@example.com` }]
+    };
+  });
+
   const [doubts, setDoubts] = useState([]);
   const [newDoubt, setNewDoubt] = useState('');
   const [similarity, setSimilarity] = useState(0);
@@ -107,7 +121,7 @@ const RoomPage = ({ role }) => {
     const doubt = {
       id: Math.random().toString(36).substring(2, 15),
       text: newDoubt,
-      user: user.primaryEmailAddress.emailAddress,
+      user: user.emailAddresses[0].emailAddress,
       upvotes: 0,
       createdAt: new Date().toISOString(), // Add createdAt field
       answered: false,
@@ -196,7 +210,17 @@ const RoomPage = ({ role }) => {
       return;
     }
 
-    const existingDoubtTexts = doubts.map(doubt => doubt.text);
+    // Filter out any undefined/null text values and ensure we have valid strings
+    const existingDoubtTexts = doubts
+      .filter(doubt => doubt && doubt.text && typeof doubt.text === 'string')
+      .map(doubt => doubt.text);
+
+    // Only calculate similarity if there are existing doubts
+    if (existingDoubtTexts.length === 0) {
+      setSimilarity(0);
+      return;
+    }
+
     const bestMatch = stringSimilarity.findBestMatch(newDoubtText, existingDoubtTexts);
     setSimilarity(bestMatch.bestMatch.rating * 100);
   };
