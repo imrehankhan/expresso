@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import socket from '../utils/socket';
 import QRCode from 'react-qr-code';
 import { FaCopy, FaEye, FaEyeSlash, FaCheck, FaThumbsUp } from 'react-icons/fa';
@@ -15,21 +16,7 @@ const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;
 const RoomPage = ({ role }) => {
   const { roomId } = useParams();
   const navigate = useNavigate();
-
-  // Simple user system to replace Clerk
-  const [user] = useState(() => {
-    let userId = localStorage.getItem('userId');
-    if (!userId) {
-      userId = 'user_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('userId', userId);
-    }
-    return {
-      id: userId,
-      firstName: 'User',
-      lastName: '',
-      emailAddresses: [{ emailAddress: `${userId}@example.com` }]
-    };
-  });
+  const { user } = useAuth();
 
   const [doubts, setDoubts] = useState([]);
   const [newDoubt, setNewDoubt] = useState('');
