@@ -30,21 +30,23 @@ const CreateRoomPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-black flex flex-col items-center justify-center text-white">
-      <h1 className="text-4xl md:text-6xl font-bold mb-6">Create a Room</h1>
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-black flex flex-col items-center justify-center text-white px-4">
+      <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6 text-center">Create a Room</h1>
       <button
         onClick={handleCreateRoom}
-        className="px-6 py-3 text-lg md:text-xl font-semibold bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 cursor-pointer"
+        className="px-4 py-2 sm:px-6 sm:py-3 text-base sm:text-lg md:text-xl font-semibold bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 cursor-pointer"
       >
         Create Room
       </button>
       {roomId && (
-        <div className="mt-10 flex flex-col items-center">
-          <QRCode value={roomId} className="mb-5" />
-          <p className="text-lg md:text-xl mb-3">Room ID: {roomId}</p>
+        <div className="mt-6 sm:mt-10 flex flex-col items-center">
+          <div className="mb-4 sm:mb-5 p-4 bg-white rounded-lg">
+            <QRCode value={roomId} size={window.innerWidth < 640 ? 150 : 200} />
+          </div>
+          <p className="text-base sm:text-lg md:text-xl mb-3 text-center">Room ID: <span className="font-mono text-orange-400">{roomId}</span></p>
           <button
             onClick={handleCopyRoomId}
-            className="px-6 py-3 text-lg md:text-xl font-semibold bg-purple-600 hover:bg-purple-700 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
+            className="px-4 py-2 sm:px-6 sm:py-3 text-base sm:text-lg md:text-xl font-semibold bg-purple-600 hover:bg-purple-700 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
           >
             Copy Room ID
           </button>

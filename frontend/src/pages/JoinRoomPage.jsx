@@ -24,26 +24,28 @@ const JoinRoomPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-black flex flex-col items-center justify-center text-white">
-      <h1 className="text-4xl md:text-6xl font-bold mb-6 text-center">
-        Join a Room
-      </h1>
-      <p className="text-lg md:text-xl mb-6 text-center">
-        Enter the Room ID or scan the QR code provided by the host.
-      </p>
-      <input
-        type="text"
-        value={roomId}
-        onChange={(e) => setRoomId(e.target.value)}
-        placeholder="Enter Room ID"
-        className="p-3 text-lg md:text-xl border-2 border-gray-300 rounded-lg text-black w-72 md:w-96 mb-6 placeholder-gray-600 bg-gray-200"
-      />
-      <button
-        onClick={handleJoinRoom}
-        className="px-6 py-3 text-lg md:text-xl font-semibold bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 cursor-pointer"
-      >
-        Join Room
-      </button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-black flex flex-col items-center justify-center text-white px-4">
+      <div className="w-full max-w-md mx-auto text-center">
+        <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6">
+          Join a Room
+        </h1>
+        <p className="text-base sm:text-lg md:text-xl mb-6 px-4">
+          Enter the Room ID or scan the QR code provided by the host.
+        </p>
+        <input
+          type="text"
+          value={roomId}
+          onChange={(e) => setRoomId(e.target.value)}
+          placeholder="Enter Room ID"
+          className="w-full p-2 sm:p-3 text-base sm:text-lg md:text-xl border-2 border-gray-300 rounded-lg text-black mb-6 placeholder-gray-600 bg-gray-200 focus:outline-none focus:border-blue-500"
+        />
+        <button
+          onClick={handleJoinRoom}
+          className="w-full sm:w-auto px-4 py-2 sm:px-6 sm:py-3 text-base sm:text-lg md:text-xl font-semibold bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 cursor-pointer"
+        >
+          Join Room
+        </button>
+      </div>
       <ToastContainer />
     </div>
   );
