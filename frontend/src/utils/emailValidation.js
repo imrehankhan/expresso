@@ -10,15 +10,15 @@ const TESTING_EMAIL = 'saketh1607@gmail.com';
  */
 export const isEmailAllowed = (email) => {
   if (!email) return false;
-  
+
   // Convert to lowercase for case-insensitive comparison
   const normalizedEmail = email.toLowerCase().trim();
-  
+
   // Allow testing email
   if (normalizedEmail === TESTING_EMAIL.toLowerCase()) {
     return true;
   }
-  
+
   // Check if email ends with allowed domain
   return normalizedEmail.endsWith(ALLOWED_DOMAIN.toLowerCase());
 };
@@ -30,23 +30,4 @@ export const isEmailAllowed = (email) => {
  */
 export const getEmailErrorMessage = (email) => {
   return `Access Denied: This website is only for VNRVJIET students and faculty. Please use your @vnrvjiet.in email address.`;
-};
-
-/**
- * Validates email domain before allowing sign-up
- * @param {string} email - Email to validate
- * @returns {object} - {isValid: boolean, message: string}
- */
-export const validateEmailForSignUp = (email) => {
-  if (!isEmailAllowed(email)) {
-    return {
-      isValid: false,
-      message: getEmailErrorMessage(email)
-    };
-  }
-  
-  return {
-    isValid: true,
-    message: ''
-  };
 };

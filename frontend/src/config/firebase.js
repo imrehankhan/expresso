@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -42,13 +42,7 @@ export const getGoogleRedirectResult = () => {
   return getRedirectResult(auth);
 };
 
-export const signInWithEmail = (email, password) => {
-  return signInWithEmailAndPassword(auth, email, password);
-};
 
-export const signUpWithEmail = (email, password) => {
-  return createUserWithEmailAndPassword(auth, email, password);
-};
 
 export const logOut = () => {
   return signOut(auth);
