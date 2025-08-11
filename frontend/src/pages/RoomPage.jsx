@@ -14,10 +14,15 @@ import { createRoom, submitDoubt, getDoubts } from '../utils/api';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;
 
-const RoomPage = ({ role }) => {
+const RoomPage = ({ role: propRole }) => {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Get role from URL params or props
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlRole = urlParams.get('role');
+  const role = urlRole || propRole || 'participant';
 
   const [doubts, setDoubts] = useState([]);
   const [answeredDoubts, setAnsweredDoubts] = useState([]);
