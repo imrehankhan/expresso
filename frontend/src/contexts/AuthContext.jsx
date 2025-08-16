@@ -33,13 +33,17 @@ export const AuthProvider = ({ children }) => {
 
         // Create a user object that matches our app's expected structure
         const userData = {
-          id: firebaseUser.uid,
+          uid: firebaseUser.uid, // Use uid instead of id
+          id: firebaseUser.uid, // Keep id for backward compatibility
+          displayName: firebaseUser.displayName || 'User',
+          email: firebaseUser.email,
           firstName: firebaseUser.displayName?.split(' ')[0] || 'User',
           lastName: firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
           emailAddresses: [{ emailAddress: firebaseUser.email }],
           photoURL: firebaseUser.photoURL,
           isAuthenticated: true
         };
+        console.log('User authenticated:', userData);
         setUser(userData);
       } else {
         // No user authenticated

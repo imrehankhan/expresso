@@ -14,8 +14,19 @@ const handleSocketConnection = (io, socket) => {
   });
 
   socket.on('newDoubt', async (roomId, doubt) => {
-    const newDoubt = new Doubt({ ...doubt, roomId, upvotes: 0, upvotedBy: [] });
+    console.log('Socket: Received new doubt:', doubt);
+    console.log('Socket: User ID in doubt:', doubt.userId);
+
+    const newDoubt = new Doubt({
+      ...doubt,
+      roomId,
+      upvotes: 0,
+      upvotedBy: [],
+      userId: doubt.userId // ✅ Ensure userId is saved
+    });
     await newDoubt.save();
+    console.log('Socket: Doubt saved with userId:', newDoubt.userId);
+
     io.to(roomId).emit('newDoubt', newDoubt); // Broadcast to all clients in the room
   });
 

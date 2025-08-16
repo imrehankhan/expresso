@@ -5,6 +5,7 @@ const doubtSchema = new mongoose.Schema({
   id: String,
   text: String,
   user: String,
+  userId: String, // Firebase user ID for tracking
   upvotes: Number,
   upvotedBy: [String], // Array of user IDs who upvoted
   answered: { type: Boolean, default: false },

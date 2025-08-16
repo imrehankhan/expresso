@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+
 import { logOut } from './config/firebase';
 import ProtectedRoute from './components/ProtectedRoute';
 import HomePage from './pages/HomePage';
@@ -9,6 +10,7 @@ import JoinRoomPage from './pages/JoinRoomPage';
 import RoomPage from './pages/RoomPage';
 import LoginPage from './pages/LoginPage';
 import AccessDeniedPage from './pages/AccessDeniedPage';
+import ProfilePage from './pages/ProfilePage';
 import { toast } from 'react-toastify';
 import './App.css';
 
@@ -140,6 +142,13 @@ const AppContent = () => {
             <ProtectedRoute><RoomPage role="host" /></ProtectedRoute>
           }
         />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute><ProfilePage /></ProtectedRoute>
+          }
+        />
+        <Route path="/access-denied" element={<AccessDeniedPage />} />
       </Routes>
     </Router>
   );
