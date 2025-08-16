@@ -9,7 +9,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import stringSimilarity from 'string-similarity';
-import { createRoom, submitDoubt, getDoubts } from '../utils/api';
+import { createRoom, submitDoubt, getDoubts, verifyRoomHost } from '../utils/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;
@@ -22,7 +22,12 @@ const RoomPage = ({ role: propRole }) => {
   // Get role from URL params or props
   const urlParams = new URLSearchParams(window.location.search);
   const urlRole = urlParams.get('role');
-  const role = urlRole || propRole || 'participant';
+  const requestedRole = urlRole || propRole || 'participant';
+
+  // Host verification states
+  const [isVerifyingHost, setIsVerifyingHost] = useState(true);
+  const [isAuthorizedHost, setIsAuthorizedHost] = useState(false);
+  const [actualRole, setActualRole] = useState('participant');
 
   const [doubts, setDoubts] = useState([]);
   const [answeredDoubts, setAnsweredDoubts] = useState([]);
@@ -69,8 +74,59 @@ const RoomPage = ({ role: propRole }) => {
     }
   }, []);
 
+  // Host verification effect
   useEffect(() => {
-    socket.emit('joinRoom', roomId, role);
+    const verifyHostAccess = async () => {
+      if (!user?.uid) {
+        setIsVerifyingHost(false);
+        setActualRole('participant');
+        return;
+      }
+
+      if (requestedRole === 'host') {
+        try {
+          console.log('Verifying host access for user:', user.uid, 'in room:', roomId);
+          const verification = await verifyRoomHost(roomId, user.uid);
+          console.log('Host verification result:', verification);
+
+          if (verification.isHost) {
+            setIsAuthorizedHost(true);
+            setActualRole('host');
+            toast.success('Welcome back, host!');
+          } else {
+            setIsAuthorizedHost(false);
+            setActualRole('participant');
+            toast.warning('Access denied: You are not the host of this room. Joining as participant.');
+
+            // Update URL to reflect actual role
+            const newUrl = window.location.pathname + '?role=participant';
+            window.history.replaceState({}, '', newUrl);
+          }
+        } catch (error) {
+          console.error('Error verifying host:', error);
+          setIsAuthorizedHost(false);
+          setActualRole('participant');
+          toast.error('Could not verify host status. Joining as participant.');
+
+          // Update URL to reflect actual role
+          const newUrl = window.location.pathname + '?role=participant';
+          window.history.replaceState({}, '', newUrl);
+        }
+      } else {
+        // Not requesting host role, proceed as participant
+        setActualRole('participant');
+      }
+
+      setIsVerifyingHost(false);
+    };
+
+    verifyHostAccess();
+  }, [roomId, user?.uid, requestedRole]);
+
+  useEffect(() => {
+    if (isVerifyingHost) return; // Wait for host verification to complete
+
+    socket.emit('joinRoom', roomId, actualRole);
 
     socket.on('existingDoubts', (existingDoubts) => {
       const activeDoubts = existingDoubts.filter(d => !d.answered);
@@ -187,7 +243,7 @@ const RoomPage = ({ role: propRole }) => {
       socket.off('markAsAnswered');
       socket.off('roomClosed');
     };
-  }, [roomId, role, user.id, navigate]);
+  }, [roomId, actualRole, user.id, navigate]);
 
   useEffect(() => {
     const fetchDoubts = async () => {
@@ -200,7 +256,7 @@ const RoomPage = ({ role: propRole }) => {
     };
 
     fetchDoubts();
-  }, [roomId]);
+  }, [roomId, actualRole]);
 
   // Speech functionality
   const handleStartListening = () => {
@@ -249,15 +305,21 @@ const RoomPage = ({ role: propRole }) => {
       return;
     }
 
+    console.log('Adding doubt with user:', user);
+    console.log('User UID:', user?.uid);
+    console.log('User email:', user?.emailAddresses?.[0]?.emailAddress);
+
     const doubt = {
       id: Math.random().toString(36).substring(2, 15),
       text: newDoubt.trim(),
       user: user.emailAddresses[0].emailAddress,
+      userId: user.uid, // ✅ Add the Firebase UID
       upvotes: 0,
       createdAt: new Date().toISOString(),
       answered: false,
     };
 
+    console.log('Submitting doubt:', doubt);
     socket.emit('newDoubt', roomId, doubt);
     setNewDoubt('');
     setSimilarity(0);
@@ -415,6 +477,18 @@ const RoomPage = ({ role: propRole }) => {
     setShowQRCode((prev) => !prev);
   };
 
+  // Show loading screen while verifying host
+  if (isVerifyingHost) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-lg">Verifying access...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className='min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-black text-white overflow-x-hidden'>
       {/* Header Section */}
@@ -437,7 +511,7 @@ const RoomPage = ({ role: propRole }) => {
 
             {/* Action Buttons */}
             <div className='flex flex-col xs:flex-row gap-2 w-full'>
-              {role !== 'participant' && (
+              {actualRole !== 'participant' && (
                 <div className='flex gap-2 flex-1'>
                   <button
                     onClick={toggleQRCode}
@@ -454,7 +528,7 @@ const RoomPage = ({ role: propRole }) => {
                 </div>
               )}
 
-              {role !== 'host' && (
+              {actualRole !== 'host' && (
                 <button
                   onClick={handleLeaveRoom}
                   className='px-3 py-2 text-xs xs:text-sm bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors'
@@ -472,7 +546,7 @@ const RoomPage = ({ role: propRole }) => {
             )}
 
             {/* QR Code Section - Optimized for Mobile */}
-            {showQRCode && role !== 'participant' && (
+            {showQRCode && actualRole !== 'participant' && (
               <div className='flex flex-col items-center py-4'>
                 <div className='bg-white p-2 xs:p-3 sm:p-4 rounded-lg'>
                   <QRCode 
@@ -492,7 +566,7 @@ const RoomPage = ({ role: propRole }) => {
       {/* Main Content */}
       <div className='w-full px-2 xs:px-3 sm:px-4 py-3 sm:py-4 pb-20'>
         {/* Enhanced Participant Input Section */}
-        {role === 'participant' && (
+        {actualRole === 'participant' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -639,7 +713,7 @@ const RoomPage = ({ role: propRole }) => {
                     >
                       <div className='text-4xl xs:text-5xl sm:text-6xl mb-3 xs:mb-4'>💬</div>
                       <p className='text-gray-400 text-sm xs:text-base sm:text-lg mb-2'>
-                        {role === 'participant'
+                        {actualRole === 'participant'
                           ? 'No questions yet. Be the first to ask!'
                           : 'No active questions at the moment.'
                         }
@@ -677,7 +751,7 @@ const RoomPage = ({ role: propRole }) => {
                                   </span>
                                   <span>•</span>
                                   <span>{new Date(doubt.createdAt).toLocaleTimeString()}</span>
-                                  {role === 'host' && visibleEmails.has(doubt.id) && (
+                                  {actualRole === 'host' && visibleEmails.has(doubt.id) && (
                                     <>
                                       <span className='hidden xs:inline'>•</span>
                                       <span className='text-blue-300 break-all text-xs'>{doubt.user}</span>
@@ -703,7 +777,7 @@ const RoomPage = ({ role: propRole }) => {
                               )}
 
                               {/* Host Controls */}
-                              {role === 'host' && (
+                              {actualRole === 'host' && (
                                 <>
                                   <button
                                     onClick={() => handleToggleEmailVisibility(doubt.id)}
@@ -794,7 +868,7 @@ const RoomPage = ({ role: propRole }) => {
                                   <span className='text-green-400 font-medium'>✓ Answered</span>
                                   <span>•</span>
                                   <span>{new Date(doubt.answeredAt || doubt.createdAt).toLocaleTimeString()}</span>
-                                  {role === 'host' && visibleEmails.has(doubt.id) && (
+                                  {actualRole === 'host' && visibleEmails.has(doubt.id) && (
                                     <>
                                       <span className='hidden xs:inline'>•</span>
                                       <span className='text-blue-300 break-all text-xs'>{doubt.user}</span>
@@ -820,7 +894,7 @@ const RoomPage = ({ role: propRole }) => {
                               )}
 
                               {/* Host Controls */}
-                              {role === 'host' && (
+                              {actualRole === 'host' && (
                                 <button
                                   onClick={() => handleToggleEmailVisibility(doubt.id)}
                                   className='p-1.5 xs:p-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors'

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -9,17 +10,26 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const JoinRoomPage = () => {
   const [roomId, setRoomId] = useState('');
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleJoinRoom = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/rooms/${roomId}`);
-      if (response.data.exists) {
+      // First check if room exists
+      const checkResponse = await axios.get(`${API_BASE_URL}/rooms/${roomId}`);
+      if (checkResponse.data.exists) {
+        // Join the room
+        if (user?.uid) {
+          await axios.post(`${API_BASE_URL}/rooms/${roomId}/join`, {
+            userId: user.uid
+          });
+        }
         navigate(`/room/${roomId}`);
       } else {
         toast.error('Invalid Room ID');
       }
     } catch (error) {
-      toast.error('Invalid Room ID');
+      console.error('Error joining room:', error);
+      toast.error('Invalid Room ID or failed to join room');
     }
   };
 
