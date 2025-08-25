@@ -133,17 +133,16 @@ const RoomPage = ({ role: propRole }) => {
       socket.connect();
     }
 
-    console.log('Emitting joinRoom event with:', { roomId, role: actualRole });
-    socket.emit('joinRoom', roomId, actualRole, (response) => {
-      console.log('Join room response:', response);
-      if (response && response.error) {
-        console.error('Error joining room:', response.error);
-        toast.error('Failed to join room. Please refresh and try again.');
-      }
+    console.log('🔗 Emitting joinRoom event with:', { roomId, role: actualRole, socketId: socket.id, connected: socket.connected });
+    socket.emit('joinRoom', roomId, actualRole);
+
+    // Test socket connectivity
+    socket.emit('ping', 'test-ping', (response) => {
+      console.log('🏓 Ping response:', response);
     });
 
     socket.on('connect', () => {
-      console.log('Socket connected, joining room...');
+      console.log('🔗 Socket connected, joining room...', { roomId, actualRole, socketId: socket.id });
       socket.emit('joinRoom', roomId, actualRole);
     });
 
@@ -270,14 +269,63 @@ const RoomPage = ({ role: propRole }) => {
       }
     });
 
-    socket.on('roomClosed', () => {
+    socket.on('roomClosed', (data) => {
+      console.log('🚪 ROOM CLOSED EVENT RECEIVED:', data);
+      console.log('🚪 Socket ID:', socket.id);
+      console.log('🚪 Current room ID:', roomId);
       setIsRoomClosed(true);
-      setRoomClosureMessage('The room was closed, kindly leave the room');
-      toast.error('Room was closed, kindly leave the room');
+
+      const message = data?.message || 'This room has been closed by the host. No new questions can be submitted.';
+      setRoomClosureMessage(`🚪 ${message}`);
+
+      // Show prominent notification
+      toast.error('🚪 Room Closed: The host has ended this session', {
+        position: "top-center",
+        autoClose: false, // Don't auto-close this important message
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+        style: {
+          backgroundColor: '#DC2626',
+          fontSize: '16px',
+          fontWeight: 'bold'
+        }
+      });
+
+      // Show additional info toast
+      toast.info('💡 You can still view existing questions, but cannot submit new ones or vote', {
+        position: "bottom-center",
+        autoClose: 8000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+        style: {
+          backgroundColor: '#3B82F6',
+          fontSize: '14px'
+        }
+      });
+
+      // Clear any ongoing speech
+      if (speechSynthesis.current) {
+        speechSynthesis.current.cancel();
+        setSpeaking(false);
+      }
+
+      // Stop any ongoing speech recognition
+      if (isListening && speechRecognition.current) {
+        speechRecognition.current.stop();
+        setIsListening(false);
+      }
     });
 
     return () => {
-      console.log('Cleaning up socket listeners...');
+      console.log('🧹 Cleaning up socket listeners for room:', roomId);
       socket.off('connect');
       socket.off('connect_error');
       socket.off('existingDoubts');
@@ -286,13 +334,13 @@ const RoomPage = ({ role: propRole }) => {
       socket.off('downvoteDoubt');
       socket.off('markAsAnswered');
       socket.off('roomClosed');
-      
-      // Only disconnect if user is leaving the room
-      if (!window.location.pathname.includes(roomId)) {
-        console.log('Leaving room and disconnecting socket');
-        socket.emit('leaveRoom', roomId);
-        socket.disconnect();
-      }
+
+      // Leave the room but keep socket connection alive for other potential rooms
+      console.log('🚪 Leaving room:', roomId);
+      socket.emit('leaveRoom', roomId);
+
+      // Don't disconnect socket completely - let it stay connected for other rooms
+      // socket.disconnect();
     };
   }, [roomId, actualRole, user.id, navigate]);
 
@@ -359,6 +407,11 @@ const RoomPage = ({ role: propRole }) => {
   };
 
   const handleAddDoubt = () => {
+    if (isRoomClosed) {
+      toast.error('Cannot submit questions - room has been closed by the host');
+      return;
+    }
+
     if (newDoubt.trim() === '') {
       toast.error('Question cannot be empty');
       return;
@@ -401,6 +454,11 @@ const RoomPage = ({ role: propRole }) => {
   };
 
   const handleToggleUpvote = (id) => {
+    if (isRoomClosed) {
+      toast.error('Cannot vote - room has been closed by the host');
+      return;
+    }
+
     if (upvotedDoubts.has(id)) {
       socket.emit('downvoteDoubt', roomId, id, user.id);
       setUpvotedDoubts((prev) => {
@@ -474,9 +532,31 @@ const RoomPage = ({ role: propRole }) => {
   };
 
   const handleCloseRoom = async () => {
-    await axios.delete(`${API_BASE_URL}/rooms/${roomId}`);
-    socket.emit('closeRoom', roomId);
-    navigate('/');
+    try {
+      console.log('🚪 Host closing room:', roomId);
+
+      // First emit the socket event to notify all clients
+      console.log('🚪 Socket connected:', socket.connected);
+      console.log('🚪 Socket ID:', socket.id);
+      socket.emit('closeRoom', roomId);
+      console.log('🚪 closeRoom event emitted to room:', roomId);
+
+      // Wait a moment to ensure the socket event is sent
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Then delete the room from the database
+      await axios.delete(`${API_BASE_URL}/rooms/${roomId}`);
+      console.log('🚪 Room deleted from database');
+
+      // Show success message
+      toast.success('Room closed successfully');
+
+      // Finally navigate away
+      navigate('/');
+    } catch (error) {
+      console.error('Error closing room:', error);
+      toast.error('Failed to close room. Please try again.');
+    }
   };
 
   const handleLeaveRoom = () => {
@@ -613,10 +693,22 @@ const RoomPage = ({ role: propRole }) => {
             </div>
 
             {/* Room Closure Message */}
-            {roomClosureMessage && (
-              <div className='p-3 bg-red-500/20 border border-red-500/50 rounded-lg'>
-                <p className='text-red-200 text-sm'>{roomClosureMessage}</p>
-              </div>
+            {isRoomClosed && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className='p-4 bg-red-600/30 border-2 border-red-500/70 rounded-xl backdrop-blur-sm'
+              >
+                <div className='flex items-center gap-3'>
+                  <div className='w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0'>
+                    <span className='text-white text-lg'>🚪</span>
+                  </div>
+                  <div>
+                    <h3 className='text-red-100 font-semibold text-sm xs:text-base'>Room Closed</h3>
+                    <p className='text-red-200 text-xs xs:text-sm mt-1'>{roomClosureMessage}</p>
+                  </div>
+                </div>
+              </motion.div>
             )}
 
             {/* QR Code Section - Optimized for Mobile */}
@@ -644,20 +736,42 @@ const RoomPage = ({ role: propRole }) => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className='mb-4 sm:mb-6 bg-white/10 backdrop-blur-md rounded-xl p-3 xs:p-4 sm:p-5 border border-white/20'
+            className={`mb-4 sm:mb-6 bg-white/10 backdrop-blur-md rounded-xl p-3 xs:p-4 sm:p-5 border border-white/20 ${
+              isRoomClosed ? 'opacity-60' : ''
+            }`}
           >
-            <h2 className='text-base xs:text-lg sm:text-xl font-semibold mb-3 flex items-center gap-2'>
-              💬 Ask Your Question
-            </h2>
+            <div className='flex items-center justify-between mb-3'>
+              <h2 className='text-base xs:text-lg sm:text-xl font-semibold flex items-center gap-2'>
+                💬 Ask Your Question
+              </h2>
+              {isRoomClosed && (
+                <div className='flex items-center gap-2 text-red-400'>
+                  <span className='text-sm'>🔒</span>
+                  <span className='text-xs font-medium'>Room Closed</span>
+                </div>
+              )}
+            </div>
 
             <div className='space-y-3'>
-              <textarea
-                value={newDoubt}
-                onChange={handleDoubtChange}
-                placeholder='Type your question here...'
-                className='w-full h-20 xs:h-24 sm:h-32 p-2 xs:p-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-gray-300 resize-none focus:outline-none focus:border-blue-400 transition-all text-sm xs:text-base'
-                disabled={isRoomClosed || isListening}
-              />
+              <div className='relative'>
+                <textarea
+                  value={newDoubt}
+                  onChange={handleDoubtChange}
+                  placeholder={isRoomClosed ? 'Room is closed - no new questions allowed' : 'Type your question here...'}
+                  className={`w-full h-20 xs:h-24 sm:h-32 p-2 xs:p-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-gray-300 resize-none focus:outline-none focus:border-blue-400 transition-all text-sm xs:text-base ${
+                    isRoomClosed ? 'cursor-not-allowed bg-gray-800/50 border-gray-600/50 text-gray-400' : ''
+                  }`}
+                  disabled={isRoomClosed || isListening}
+                />
+                {isRoomClosed && (
+                  <div className='absolute inset-0 bg-gray-900/30 rounded-lg flex items-center justify-center pointer-events-none'>
+                    <div className='text-center text-gray-400'>
+                      <div className='text-xl mb-1'>🚫</div>
+                      <div className='text-xs font-medium'>Room Closed</div>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Stats Row */}
               <div className='flex flex-col xs:flex-row xs:items-center gap-2 xs:gap-4 text-xs text-gray-300'>
@@ -873,12 +987,15 @@ const RoomPage = ({ role: propRole }) => {
                               {/* Upvote Button */}
                               <button
                                 onClick={() => handleToggleUpvote(doubt.id)}
+                                disabled={isRoomClosed}
                                 className={`p-1.5 xs:p-2 rounded-lg transition-all ${
-                                  upvotedDoubts.has(doubt.id)
+                                  isRoomClosed
+                                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                                    : upvotedDoubts.has(doubt.id)
                                     ? 'bg-blue-600 text-white scale-105 xs:scale-110'
                                     : 'bg-gray-600 hover:bg-gray-700 hover:scale-105'
                                 }`}
-                                title='Upvote question'
+                                title={isRoomClosed ? 'Voting disabled - room closed' : 'Upvote question'}
                               >
                                 <FaThumbsUp className='w-3 h-3 xs:w-4 xs:h-4' />
                               </button>
