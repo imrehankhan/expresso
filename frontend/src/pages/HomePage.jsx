@@ -1,19 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import './HomePage.css';
 import { LuUsersRound } from "react-icons/lu";
 import { TiUserAddOutline } from "react-icons/ti";
-import { FaUser } from 'react-icons/fa';
+import { FaUser, FaSpinner } from 'react-icons/fa';
 import AnimatedBackground from '../components/AnimatedBackground';
 
 
 const HomePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-
-
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
 
   const handleCreateRoom = () => {
     navigate('/create-room');
@@ -23,19 +22,37 @@ const HomePage = () => {
     navigate('/join-room');
   };
 
+  const handleProfileClick = async () => {
+    setIsProfileLoading(true);
+    try {
+      // Small delay to show loading state (optional)
+      await new Promise(resolve => setTimeout(resolve, 500));
+      navigate('/profile');
+    } catch (error) {
+      console.error('Error navigating to profile:', error);
+    } finally {
+      setIsProfileLoading(false);
+    }
+  };
+
   return (
     <AnimatedBackground>
       <div className="min-h-screen flex flex-col items-center justify-center px-4 text-white">
       {/* Header */}
       <div className="absolute top-4 right-4 flex items-center space-x-4">
         <motion.button
-          onClick={() => navigate('/profile')}
-          className="p-3 bg-white/10 hover:bg-white/20 rounded-lg transition-colors backdrop-blur-md border border-white/20"
+          onClick={handleProfileClick}
+          className="p-3 bg-white/10 hover:bg-white/20 rounded-lg transition-colors backdrop-blur-md border border-white/20 relative"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           title="Profile"
+          disabled={isProfileLoading}
         >
-          <FaUser className="text-blue-400 text-lg" />
+          {isProfileLoading ? (
+            <FaSpinner className="text-blue-400 text-lg animate-spin" />
+          ) : (
+            <FaUser className="text-blue-400 text-lg" />
+          )}
         </motion.button>
       </div>
 

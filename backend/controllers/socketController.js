@@ -15,6 +15,7 @@ const handleSocketConnection = (io, socket) => {
 
   socket.on('newDoubt', async (roomId, doubt) => {
     console.log('Socket: Received new doubt:', doubt);
+    console.log('Socket: Broadcasting new doubt to room:', roomId);
     console.log('Socket: User ID in doubt:', doubt.userId);
 
     const newDoubt = new Doubt({
