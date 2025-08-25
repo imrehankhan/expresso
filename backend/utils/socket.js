@@ -1,8 +1,11 @@
-import { io } from 'socket.io-client';
-require('dotenv').config();
+// This file is no longer needed as the backend should not use socket.io-client
+// Socket server is already configured in app.js
+// Remove this file or use it for server-side socket utilities if needed
 
-const socket = io(process.env.VITE_SOCKET_SERVER_URL, {
-  withCredentials: true,
-});
+export const createSocketNamespace = (io, namespace) => {
+  return io.of(namespace);
+};
 
-export default socket;
+export const emitToRoom = (io, roomId, event, data) => {
+  io.to(roomId).emit(event, data);
+};

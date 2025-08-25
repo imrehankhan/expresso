@@ -126,19 +126,50 @@ const RoomPage = ({ role: propRole }) => {
   useEffect(() => {
     if (isVerifyingHost) return; // Wait for host verification to complete
 
-    socket.emit('joinRoom', roomId, actualRole);
+    console.log('Connecting to socket...');
+    
+    // Ensure socket is connected before joining room
+    if (socket.disconnected) {
+      socket.connect();
+    }
+
+    console.log('Emitting joinRoom event with:', { roomId, role: actualRole });
+    socket.emit('joinRoom', roomId, actualRole, (response) => {
+      console.log('Join room response:', response);
+      if (response && response.error) {
+        console.error('Error joining room:', response.error);
+        toast.error('Failed to join room. Please refresh and try again.');
+      }
+    });
+
+    socket.on('connect', () => {
+      console.log('Socket connected, joining room...');
+      socket.emit('joinRoom', roomId, actualRole);
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+      toast.error('Connection error. Trying to reconnect...');
+    });
 
     socket.on('existingDoubts', (existingDoubts) => {
+      console.log('Client: Received existing doubts:', existingDoubts);
       const activeDoubts = existingDoubts.filter(d => !d.answered);
       const answeredDoubts = existingDoubts.filter(d => d.answered);
       setDoubts(activeDoubts);
       setAnsweredDoubts(answeredDoubts);
-      const upvoted = new Set(existingDoubts.filter(d => d.upvotedBy.includes(user.id)).map(d => d.id));
-      setUpvotedDoubts(upvoted);
+      const upvoted = new Set(existingDoubts.filter(d => d.upvotedBy?.includes(user?.id)).map(d => d.id));
+      setUpvotedDoubts(upvoted || new Set());
     });
 
     socket.on('newDoubt', (doubt) => {
-      setDoubts((prevDoubts) => [...prevDoubts, doubt]);
+      console.log('Client: Received new doubt via socket:', doubt);
+      setDoubts((prevDoubts) => {
+        console.log('Client: Previous doubts:', prevDoubts);
+        const newDoubts = [...prevDoubts, doubt];
+        console.log('Client: Updated doubts:', newDoubts);
+        return newDoubts;
+      });
       toast.info(`New Doubt: ${doubt.text}`, {
         position: "top-right",
         autoClose: 5000,
@@ -236,23 +267,41 @@ const RoomPage = ({ role: propRole }) => {
     });
 
     return () => {
+      console.log('Cleaning up socket listeners...');
+      socket.off('connect');
+      socket.off('connect_error');
       socket.off('existingDoubts');
       socket.off('newDoubt');
       socket.off('upvoteDoubt');
       socket.off('downvoteDoubt');
       socket.off('markAsAnswered');
       socket.off('roomClosed');
+      
+      // Only disconnect if user is leaving the room
+      if (!window.location.pathname.includes(roomId)) {
+        console.log('Leaving room and disconnecting socket');
+        socket.emit('leaveRoom', roomId);
+        socket.disconnect();
+      }
     };
   }, [roomId, actualRole, user.id, navigate]);
 
+  // Initial fetch of doubts
   useEffect(() => {
     const fetchDoubts = async () => {
-      const response = await axios.get(`${API_BASE_URL}/rooms/${roomId}/doubts`);
-      const allDoubts = response.data;
-      const activeDoubts = allDoubts.filter(d => !d.answered);
-      const answeredDoubts = allDoubts.filter(d => d.answered);
-      setDoubts(activeDoubts);
-      setAnsweredDoubts(answeredDoubts);
+      try {
+        console.log('Fetching initial doubts...');
+        const response = await axios.get(`${API_BASE_URL}/rooms/${roomId}/doubts`);
+        const allDoubts = response.data || [];
+        const activeDoubts = allDoubts.filter(d => !d.answered);
+        const answeredDoubts = allDoubts.filter(d => d.answered);
+        console.log('Fetched doubts:', { active: activeDoubts.length, answered: answeredDoubts.length });
+        setDoubts(activeDoubts);
+        setAnsweredDoubts(answeredDoubts);
+      } catch (error) {
+        console.error('Error fetching doubts:', error);
+        toast.error('Failed to load doubts. Please try refreshing the page.');
+      }
     };
 
     fetchDoubts();
@@ -319,7 +368,8 @@ const RoomPage = ({ role: propRole }) => {
       answered: false,
     };
 
-    console.log('Submitting doubt:', doubt);
+    console.log('Submitting doubt via socket:', doubt);
+    console.log('Emitting newDoubt event to room:', roomId);
     socket.emit('newDoubt', roomId, doubt);
     setNewDoubt('');
     setSimilarity(0);
