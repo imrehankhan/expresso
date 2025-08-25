@@ -166,21 +166,31 @@ const RoomPage = ({ role: propRole }) => {
       console.log('Client: Received new doubt via socket:', doubt);
       setDoubts((prevDoubts) => {
         console.log('Client: Previous doubts:', prevDoubts);
+        // Check if doubt already exists to prevent duplicates
+        const existingDoubt = prevDoubts.find(d => d.id === doubt.id);
+        if (existingDoubt) {
+          console.log('Client: Doubt already exists, skipping duplicate');
+          return prevDoubts;
+        }
         const newDoubts = [...prevDoubts, doubt];
         console.log('Client: Updated doubts:', newDoubts);
         return newDoubts;
       });
-      toast.info(`New Doubt: ${doubt.text}`, {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        style: { backgroundColor: '#AA60C8' }
-      });
+
+      // Only show toast notification if this doubt is from another user
+      if (doubt.userId !== user?.uid) {
+        toast.info(`New Doubt: ${doubt.text}`, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+          style: { backgroundColor: '#AA60C8' }
+        });
+      }
     });
 
     socket.on('upvoteDoubt', (doubtId) => {
@@ -364,13 +374,27 @@ const RoomPage = ({ role: propRole }) => {
       user: user.emailAddresses[0].emailAddress,
       userId: user.uid, // ✅ Add the Firebase UID
       upvotes: 0,
+      upvotedBy: [],
       createdAt: new Date().toISOString(),
       answered: false,
     };
 
     console.log('Submitting doubt via socket:', doubt);
     console.log('Emitting newDoubt event to room:', roomId);
+
+    // Optimistically add the doubt to local state immediately
+    setDoubts((prevDoubts) => {
+      console.log('Client: Adding doubt optimistically to local state');
+      console.log('Client: Current doubts count:', prevDoubts.length);
+      console.log('Client: Adding doubt with ID:', doubt.id);
+      const newDoubts = [...prevDoubts, doubt];
+      console.log('Client: New doubts count:', newDoubts.length);
+      return newDoubts;
+    });
+
+    // Emit to socket for other clients and persistence
     socket.emit('newDoubt', roomId, doubt);
+
     setNewDoubt('');
     setSimilarity(0);
     toast.success('Question submitted successfully!');

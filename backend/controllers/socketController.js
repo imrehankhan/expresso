@@ -28,7 +28,21 @@ const handleSocketConnection = (io, socket) => {
     await newDoubt.save();
     console.log('Socket: Doubt saved with userId:', newDoubt.userId);
 
-    io.to(roomId).emit('newDoubt', newDoubt); // Broadcast to all clients in the room
+    // Convert to plain object to avoid Mongoose document issues
+    const doubtToEmit = {
+      id: newDoubt.id,
+      text: newDoubt.text,
+      user: newDoubt.user,
+      userId: newDoubt.userId,
+      upvotes: newDoubt.upvotes,
+      upvotedBy: newDoubt.upvotedBy,
+      answered: newDoubt.answered,
+      answeredAt: newDoubt.answeredAt,
+      createdAt: newDoubt.createdAt,
+      roomId: newDoubt.roomId
+    };
+
+    io.to(roomId).emit('newDoubt', doubtToEmit); // Broadcast to all clients in the room
   });
 
   socket.on('upvoteDoubt', async (roomId, doubtId, userId) => {
