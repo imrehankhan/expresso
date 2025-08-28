@@ -104,13 +104,13 @@ const UserStats = ({ userId, className = '' }) => {
         animate={{ opacity: 1, y: 0 }}
         className="text-center"
       >
-        <h2 className="text-2xl font-bold text-white mb-2">Your Stats</h2>
+        {/* <h2 className="text-2xl font-bold text-white mb-2">Your Stats</h2>
         <div className="flex items-center justify-center space-x-2">
           <span className="text-lg">{getRankIcon(stats.rank)}</span>
           <span className={`text-lg font-semibold ${getRankColor(stats.rank)}`}>
             {stats.rank}
           </span>
-        </div>
+        </div> */}
       </motion.div>
 
       {/* Stats Grid */}
