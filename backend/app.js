@@ -5,6 +5,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const handleSocketConnection = require('./controllers/socketController');
 const routes = require('./routes/routes'); // Import routes
+const { swaggerUi, specs } = require('./swagger'); // Import Swagger configuration
 require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
@@ -48,6 +49,16 @@ const io = socketIo(server, {
 
 // Middleware to parse JSON bodies
 app.use(express.json());
+
+// Swagger UI setup
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+  explorer: true,
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'UnDoubt API Documentation',
+  swaggerOptions: {
+    persistAuthorization: true,
+  }
+}));
 
 // Use routes with /api prefix
 app.use('/api', routes);
