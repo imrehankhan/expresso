@@ -3,7 +3,7 @@
 const ALLOWED_DOMAIN = '@vnrvjiet.in';
 const TESTING_EMAIL = 'saketh1607@gmail.com';
 const TESTING_EMAI = 'pvtsk01@gmail.com';
-
+const TEST_EMA='rehan2026khan@gmail.com';
 /**
  * Validates if an email is allowed to access the application
  * @param {string} email - The email address to validate
@@ -16,7 +16,7 @@ export const isEmailAllowed = (email) => {
   const normalizedEmail = email.toLowerCase().trim();
 
   // Allow testing email
-  if ((normalizedEmail === TESTING_EMAIL.toLowerCase())||(normalizedEmail === TESTING_EMAI.toLowerCase())) {
+  if ((normalizedEmail === TESTING_EMAIL.toLowerCase())||(normalizedEmail === TESTING_EMAI.toLowerCase())||(normalizedEmail === TEST_EMA.toLowerCase())) {
     return true;
   }
 

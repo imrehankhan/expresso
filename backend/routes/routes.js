@@ -6,7 +6,68 @@ const Statistics = require('../models/Statistics');
 
 const router = express.Router();
 
-// room create karne ke liye route
+/**
+ * @swagger
+ * /api/rooms:
+ *   post:
+ *     summary: Create a new room
+ *     description: Creates a new room for hosting doubt/question sessions
+ *     tags: [Rooms]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - roomId
+ *               - topic
+ *               - userId
+ *             properties:
+ *               roomId:
+ *                 type: string
+ *                 description: Unique identifier for the room
+ *                 example: "12345"
+ *               topic:
+ *                 type: string
+ *                 description: Topic or subject of the room
+ *                 example: "React.js Fundamentals"
+ *               userId:
+ *                 type: string
+ *                 description: ID of the user creating the room
+ *                 example: "user123"
+ *     responses:
+ *       201:
+ *         description: Room created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Room created"
+ *                 room:
+ *                   $ref: '#/components/schemas/Room'
+ *       400:
+ *         description: Bad request - missing required fields
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: Conflict - room already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post('/rooms', async (req, res) => {
   try {
     const { roomId, userId, topic } = req.body;
@@ -62,7 +123,59 @@ router.post('/rooms', async (req, res) => {
   }
 });
 
-// doubt submit karne ke liye route
+/**
+ * @swagger
+ * /api/doubts:
+ *   post:
+ *     summary: Submit a new doubt/question
+ *     description: Submit a new question or doubt to a specific room
+ *     tags: [Doubts]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - roomId
+ *               - text
+ *               - user
+ *             properties:
+ *               roomId:
+ *                 type: string
+ *                 description: ID of the room where doubt is being asked
+ *                 example: "12345"
+ *               text:
+ *                 type: string
+ *                 description: The question or doubt text
+ *                 example: "What is the difference between useState and useEffect?"
+ *               user:
+ *                 oneOf:
+ *                   - type: string
+ *                     description: User name or email
+ *                     example: "john@example.com"
+ *                   - type: object
+ *                     properties:
+ *                       displayName:
+ *                         type: string
+ *                         example: "John Doe"
+ *                       uid:
+ *                         type: string
+ *                         example: "user123"
+ *     responses:
+ *       201:
+ *         description: Doubt submitted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Doubt'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post('/doubts', async (req, res) => {
   try {
     const { roomId, text, user } = req.body;
@@ -99,7 +212,66 @@ router.post('/doubts', async (req, res) => {
   }
 });
 
-// Join a room
+/**
+ * @swagger
+ * /api/rooms/{roomId}/join:
+ *   post:
+ *     summary: Join a room
+ *     description: Join an existing room as a participant
+ *     tags: [Rooms]
+ *     parameters:
+ *       - in: path
+ *         name: roomId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The room ID to join
+ *         example: "12345"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: ID of the user joining the room
+ *                 example: "user123"
+ *     responses:
+ *       200:
+ *         description: Successfully joined room
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Successfully joined room"
+ *                 room:
+ *                   $ref: '#/components/schemas/Room'
+ *       400:
+ *         description: Bad request - missing user ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Room not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post('/rooms/:roomId/join', async (req, res) => {
   try {
     const { roomId } = req.params;
@@ -143,7 +315,61 @@ router.post('/rooms/:roomId/join', async (req, res) => {
   }
 });
 
-// check if room exists
+/**
+ * @swagger
+ * /api/rooms/{roomId}:
+ *   get:
+ *     summary: Check if room exists
+ *     description: Verify if a room exists and get room details
+ *     tags: [Rooms]
+ *     parameters:
+ *       - in: path
+ *         name: roomId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The room ID to check
+ *         example: "12345"
+ *     responses:
+ *       200:
+ *         description: Room exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 exists:
+ *                   type: boolean
+ *                   example: true
+ *                 room:
+ *                   $ref: '#/components/schemas/Room'
+ *       404:
+ *         description: Room not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 exists:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Room not found"
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 exists:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Server error"
+ */
 router.get('/rooms/:roomId', async (req, res) => {
   const { roomId } = req.params;
   try {
@@ -158,14 +384,76 @@ router.get('/rooms/:roomId', async (req, res) => {
   }
 });
 
-// room se doubts ko lane ke liye route
+/**
+ * @swagger
+ * /api/rooms/{roomId}/doubts:
+ *   get:
+ *     summary: Get all doubts from a room
+ *     description: Retrieve all questions/doubts from a specific room
+ *     tags: [Doubts]
+ *     parameters:
+ *       - in: path
+ *         name: roomId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The room ID to get doubts from
+ *         example: "12345"
+ *     responses:
+ *       200:
+ *         description: List of doubts from the room
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Doubt'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/rooms/:roomId/doubts', async (req, res) => {
   const { roomId } = req.params;
   const doubts = await Doubt.find({ roomId });
   res.status(200).send(doubts);
 });
 
-// room close karne ke liye route
+/**
+ * @swagger
+ * /api/rooms/{roomId}:
+ *   delete:
+ *     summary: Close/delete a room
+ *     description: Close a room and delete all associated doubts
+ *     tags: [Rooms]
+ *     parameters:
+ *       - in: path
+ *         name: roomId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The room ID to close
+ *         example: "12345"
+ *     responses:
+ *       200:
+ *         description: Room closed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Room closed and doubts deleted"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.delete('/rooms/:roomId', async (req, res) => {
   const { roomId } = req.params;
   await Doubt.deleteMany({ roomId });
@@ -181,7 +469,60 @@ router.get('/doubts', async (req, res) => {
 
 
 
-// Get or create user profile
+/**
+ * @swagger
+ * /api/users:
+ *   post:
+ *     summary: Create or update user profile
+ *     description: Create a new user profile or update existing user information
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - email
+ *               - displayName
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: Unique user identifier
+ *                 example: "user123"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: User email address
+ *                 example: "john@example.com"
+ *               displayName:
+ *                 type: string
+ *                 description: User display name
+ *                 example: "John Doe"
+ *     responses:
+ *       200:
+ *         description: User created or updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Bad request - missing required fields
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post('/users', async (req, res) => {
   try {
     console.log('POST /users - Request body:', JSON.stringify(req.body, null, 2));
@@ -238,7 +579,77 @@ router.post('/users', async (req, res) => {
   }
 });
 
-// Get user statistics
+/**
+ * @swagger
+ * /api/users/{userId}/stats:
+ *   get:
+ *     summary: Get user statistics
+ *     description: Retrieve comprehensive statistics for a specific user
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The user ID to get statistics for
+ *         example: "user123"
+ *     responses:
+ *       200:
+ *         description: User statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 stats:
+ *                   type: object
+ *                   properties:
+ *                     questionsAsked:
+ *                       type: integer
+ *                       description: Total number of questions asked
+ *                       example: 15
+ *                     roomsJoined:
+ *                       type: integer
+ *                       description: Total number of rooms joined
+ *                       example: 8
+ *                     upvotesReceived:
+ *                       type: integer
+ *                       description: Total upvotes received on questions
+ *                       example: 42
+ *                     timeSpent:
+ *                       type: integer
+ *                       description: Total time spent in minutes
+ *                       example: 1200
+ *                     streak:
+ *                       type: integer
+ *                       description: Current activity streak
+ *                       example: 7
+ *                     rank:
+ *                       type: string
+ *                       description: User rank based on activity
+ *                       example: "Advanced"
+ *                     lastActive:
+ *                       type: string
+ *                       format: date-time
+ *                       description: Last activity timestamp
+ *                     joinedAt:
+ *                       type: string
+ *                       format: date-time
+ *                       description: User registration timestamp
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/users/:userId/stats', async (req, res) => {
   try {
     const { userId } = req.params;
@@ -331,7 +742,51 @@ router.get('/users/:userId/recent-rooms', async (req, res) => {
   }
 });
 
-// Get global statistics
+/**
+ * @swagger
+ * /api/statistics:
+ *   get:
+ *     summary: Get global platform statistics
+ *     description: Retrieve overall platform statistics and metrics
+ *     tags: [Statistics]
+ *     responses:
+ *       200:
+ *         description: Global statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 stats:
+ *                   type: object
+ *                   properties:
+ *                     totalUsers:
+ *                       type: integer
+ *                       description: Total number of registered users
+ *                       example: 1250
+ *                     activeRooms:
+ *                       type: integer
+ *                       description: Number of active rooms (created in last 24h)
+ *                       example: 45
+ *                     questionsToday:
+ *                       type: integer
+ *                       description: Number of questions asked today
+ *                       example: 128
+ *                     totalQuestions:
+ *                       type: integer
+ *                       description: Total number of questions ever asked
+ *                       example: 5420
+ *                     onlineUsers:
+ *                       type: integer
+ *                       description: Estimated number of currently online users
+ *                       example: 89
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/statistics', async (req, res) => {
   try {
     console.log('Fetching statistics...');
