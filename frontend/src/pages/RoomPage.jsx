@@ -509,23 +509,23 @@ const RoomPage = ({ role: propRole }) => {
     });
 
     // Update the UI optimistically
-    // const updateOptimisticVotes = (doubt) => {
-    //   if (doubt.id === id) {
-    //     const newUpvotedBy = wasUpvoted 
-    //       ? (doubt.upvotedBy || []).filter(userId => userId !== currentUserId)
-    //       : [...(doubt.upvotedBy || []), currentUserId];
+    const updateOptimisticVotes = (doubt) => {
+      if (doubt.id === id) {
+        const newUpvotedBy = wasUpvoted 
+          ? (doubt.upvotedBy || []).filter(userId => userId !== currentUserId)
+          : [...(doubt.upvotedBy || []), currentUserId];
         
-    //     return {
-    //       ...doubt,
-    //       upvotes: newUpvotedBy.length,
-    //       upvotedBy: newUpvotedBy
-    //     };
-    //   }
-    //   return doubt;
-    // };
+        return {
+          ...doubt,
+          upvotes: newUpvotedBy.length,
+          upvotedBy: newUpvotedBy
+        };
+      }
+      return doubt;
+    };
 
-    // setDoubts(prevDoubts => prevDoubts.map(updateOptimisticVotes));
-    // setAnsweredDoubts(prevAnswered => prevAnswered.map(updateOptimisticVotes));
+    setDoubts(prevDoubts => prevDoubts.map(updateOptimisticVotes));
+    setAnsweredDoubts(prevAnswered => prevAnswered.map(updateOptimisticVotes));
     
     // Emit the vote event with a callback to refresh the doubt
     const handleVoteResponse = (response) => {
