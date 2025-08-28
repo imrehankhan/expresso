@@ -108,9 +108,16 @@ const RoomPage = ({ role: propRole }) => {
   const speechSynthesis = useRef(window.speechSynthesis);
   const speechRecognition = useRef(null);
 
+  // Store pending votes to handle duplicates
+  const pendingVotes = useRef(new Set());
+
   // Get consistent user ID
   const getUserId = () => {
-    return user?.uid || user?.id;
+    const uid = user?.uid || user?.id;
+    if (!uid) {
+      console.warn('No user ID available');
+    }
+    return uid;
   };
 
   // Initialize speech APIs
@@ -211,27 +218,40 @@ const RoomPage = ({ role: propRole }) => {
       const handleDisconnect = () => {
         console.log('Socket disconnected');
         setSocketConnected(false);
+        // Clear pending votes on disconnect
+        pendingVotes.current.clear();
       };
 
       const handleConnectError = (error) => {
         console.error('Socket connection error:', error);
         setSocketConnected(false);
+        pendingVotes.current.clear();
       };
 
       const handleExistingDoubts = (existingDoubts) => {
         console.log('Received existing doubts:', existingDoubts);
+        
+        if (!Array.isArray(existingDoubts)) {
+          console.error('Invalid existing doubts data:', existingDoubts);
+          return;
+        }
+
         const activeDoubts = existingDoubts.filter(d => !d.answered);
         const answeredDoubts = existingDoubts.filter(d => d.answered);
+        
         setDoubts(activeDoubts);
         setAnsweredDoubts(answeredDoubts);
         
         const currentUserId = getUserId();
-        const upvoted = new Set(
-          existingDoubts
-            .filter(d => Array.isArray(d.upvotedBy) && d.upvotedBy.includes(currentUserId))
-            .map(d => d.id)
-        );
-        setUpvotedDoubts(upvoted);
+        if (currentUserId) {
+          const upvoted = new Set(
+            existingDoubts
+              .filter(d => Array.isArray(d.upvotedBy) && d.upvotedBy.includes(currentUserId))
+              .map(d => d.id)
+          );
+          setUpvotedDoubts(upvoted);
+          console.log('Set initial upvoted doubts:', Array.from(upvoted));
+        }
       };
 
       const handleNewDoubt = (doubt) => {
@@ -260,27 +280,44 @@ const RoomPage = ({ role: propRole }) => {
       const handleUpvoteDoubt = (data) => {
         console.log('Received upvote update:', data);
         const { doubtId, upvotes, upvotedBy } = data;
+        
+        if (!doubtId) {
+          console.error('Invalid upvote data received:', data);
+          return;
+        }
+
         const currentUserId = getUserId();
 
-        // Update both active and answered doubts immediately
-        const updateDoubtUpvotes = (doubt) => 
-          doubt.id === doubtId 
-            ? { ...doubt, upvotes: upvotes || 0, upvotedBy: upvotedBy || [] }
-            : doubt;
+        // Remove from pending votes since we got a response
+        pendingVotes.current.delete(doubtId);
+
+        // Update both active and answered doubts with server data
+        const updateDoubtUpvotes = (doubt) => {
+          if (doubt.id === doubtId) {
+            return {
+              ...doubt,
+              upvotes: typeof upvotes === 'number' ? upvotes : 0,
+              upvotedBy: Array.isArray(upvotedBy) ? upvotedBy : []
+            };
+          }
+          return doubt;
+        };
 
         setDoubts(prevDoubts => prevDoubts.map(updateDoubtUpvotes));
         setAnsweredDoubts(prevAnswered => prevAnswered.map(updateDoubtUpvotes));
 
-        // Update local upvoted state immediately
+        // Update local upvoted state based on server data
         setUpvotedDoubts(prev => {
           const newSet = new Set(prev);
-          if (Array.isArray(upvotedBy) && upvotedBy.includes(currentUserId)) {
+          if (Array.isArray(upvotedBy) && currentUserId && upvotedBy.includes(currentUserId)) {
             newSet.add(doubtId);
           } else {
             newSet.delete(doubtId);
           }
           return newSet;
         });
+
+        console.log('Updated upvote state for doubt:', doubtId, 'New upvotes:', upvotes);
       };
 
       const handleDownvoteDoubt = handleUpvoteDoubt;
@@ -375,6 +412,7 @@ const RoomPage = ({ role: propRole }) => {
       socket.off('downvoteDoubt');
       socket.off('markAsAnswered');
       socket.off('roomClosed');
+      pendingVotes.current.clear();
     };
   }, [isVerifyingHost, actualRole, roomId, navigate]);
 
@@ -495,9 +533,51 @@ const RoomPage = ({ role: propRole }) => {
     }
 
     const currentUserId = getUserId();
-    const wasUpvoted = upvotedDoubts.has(id);
+    if (!currentUserId) {
+      showNotification('User authentication required', 'error');
+      return;
+    }
 
-    // Optimistic update for immediate feedback
+    // Check if vote is already pending
+    if (pendingVotes.current.has(id)) {
+      showNotification('Vote in progress, please wait...', 'warning');
+      return;
+    }
+
+    // Find the current doubt to get its current state
+    const currentDoubt = [...doubts, ...answeredDoubts].find(d => d.id === id);
+    if (!currentDoubt) {
+      showNotification('Question not found', 'error');
+      return;
+    }
+
+    const wasUpvoted = upvotedDoubts.has(id);
+    console.log(`Toggling upvote for doubt ${id}: wasUpvoted=${wasUpvoted}, currentUserId=${currentUserId}`);
+
+    // Add to pending votes
+    pendingVotes.current.add(id);
+
+    // Create optimistic update helper
+    const createOptimisticUpdate = (doubt) => {
+      if (doubt.id === id) {
+        const currentUpvotedBy = Array.isArray(doubt.upvotedBy) ? doubt.upvotedBy : [];
+        const newUpvotedBy = wasUpvoted 
+          ? currentUpvotedBy.filter(userId => userId !== currentUserId)
+          : [...currentUpvotedBy, currentUserId];
+        
+        return {
+          ...doubt,
+          upvotes: newUpvotedBy.length,
+          upvotedBy: newUpvotedBy
+        };
+      }
+      return doubt;
+    };
+
+    // Store original state for potential revert
+    const originalDoubt = { ...currentDoubt };
+
+    // Apply optimistic updates immediately
     setUpvotedDoubts(prev => {
       const newSet = new Set(prev);
       if (wasUpvoted) {
@@ -505,51 +585,61 @@ const RoomPage = ({ role: propRole }) => {
       } else {
         newSet.add(id);
       }
+      console.log('Optimistic upvote update:', Array.from(newSet));
       return newSet;
     });
 
-    // Update the UI optimistically
-    // const updateOptimisticVotes = (doubt) => {
-    //   if (doubt.id === id) {
-    //     const newUpvotedBy = wasUpvoted 
-    //       ? (doubt.upvotedBy || []).filter(userId => userId !== currentUserId)
-    //       : [...(doubt.upvotedBy || []), currentUserId];
-        
-    //     return {
-    //       ...doubt,
-    //       upvotes: newUpvotedBy.length,
-    //       upvotedBy: newUpvotedBy
-    //     };
-    //   }
-    //   return doubt;
-    // };
+    setDoubts(prevDoubts => prevDoubts.map(createOptimisticUpdate));
+    setAnsweredDoubts(prevAnswered => prevAnswered.map(createOptimisticUpdate));
 
-    // setDoubts(prevDoubts => prevDoubts.map(updateOptimisticVotes));
-    // setAnsweredDoubts(prevAnswered => prevAnswered.map(updateOptimisticVotes));
+    // Emit the vote event with proper error handling
+    const voteEventName = wasUpvoted ? 'downvoteDoubt' : 'upvoteDoubt';
     
-    // Emit the vote event with a callback to refresh the doubt
-    const handleVoteResponse = (response) => {
-      if (response?.error) {
-        console.error('Vote error:', response.error);
-        // Revert optimistic update
-        setUpvotedDoubts(prev => {
-          const newSet = new Set(prev);
-          if (wasUpvoted) {
-            newSet.add(id);
-          } else {
-            newSet.delete(id);
-          }
-          return newSet;
-        });
-        showNotification(wasUpvoted ? 'Failed to remove upvote' : 'Failed to upvote', 'error');
-      }
+    const timeoutId = setTimeout(() => {
+      console.error('Vote request timed out for doubt:', id);
+      pendingVotes.current.delete(id);
+      showNotification('Vote request timed out. Please try again.', 'error');
+      revertOptimisticUpdate();
+    }, 10000); // 10 second timeout
+
+    const revertOptimisticUpdate = () => {
+      console.log('Reverting optimistic update for doubt:', id);
+      // Revert upvoted state
+      setUpvotedDoubts(prev => {
+        const newSet = new Set(prev);
+        if (wasUpvoted) {
+          newSet.add(id);
+        } else {
+          newSet.delete(id);
+        }
+        return newSet;
+      });
+
+      // Revert doubt updates by restoring original state
+      const revertUpdate = (doubt) => {
+        if (doubt.id === id) {
+          return originalDoubt;
+        }
+        return doubt;
+      };
+
+      setDoubts(prevDoubts => prevDoubts.map(revertUpdate));
+      setAnsweredDoubts(prevAnswered => prevAnswered.map(revertUpdate));
     };
 
-    if (wasUpvoted) {
-      socket.emit('downvoteDoubt', roomId, id, currentUserId, handleVoteResponse);
-    } else {
-      socket.emit('upvoteDoubt', roomId, id, currentUserId, handleVoteResponse);
-    }
+    socket.emit(voteEventName, roomId, id, currentUserId, (response) => {
+      clearTimeout(timeoutId);
+      pendingVotes.current.delete(id);
+      
+      if (response?.error) {
+        console.error(`${voteEventName} error:`, response.error);
+        showNotification(`Failed to ${wasUpvoted ? 'remove upvote' : 'upvote'}`, 'error');
+        revertOptimisticUpdate();
+      } else {
+        console.log(`${voteEventName} successful for doubt ${id}`);
+        // Success - the socket event handler will update the state with server data
+      }
+    });
   };
 
   const handleToggleEmailVisibility = (id) => {
@@ -1382,18 +1472,18 @@ const RoomPage = ({ role: propRole }) => {
 
                                 <motion.button
                                   onClick={() => handleToggleUpvote(doubt.id)}
-                                  disabled={!socketConnected}
+                                  disabled={!socketConnected || pendingVotes.current.has(doubt.id)}
                                   className={`p-2 rounded-lg transition-all duration-300 disabled:cursor-not-allowed border text-xs ${
                                     upvotedDoubts.has(doubt.id)
                                       ? 'bg-blue-600 text-white border-blue-500/50 scale-110'
                                       : 'bg-gray-600 hover:bg-gray-700 hover:scale-105 border-white/20'
-                                  } ${!socketConnected ? 'opacity-50' : ''}`}
-                                  title="Upvote question"
+                                  } ${!socketConnected || pendingVotes.current.has(doubt.id) ? 'opacity-50' : ''}`}
+                                  title={pendingVotes.current.has(doubt.id) ? 'Processing...' : 'Upvote question'}
                                   whileHover={{ 
-                                    scale: socketConnected ? (upvotedDoubts.has(doubt.id) ? 1.1 : 1.05) : 1 
+                                    scale: socketConnected && !pendingVotes.current.has(doubt.id) ? (upvotedDoubts.has(doubt.id) ? 1.1 : 1.05) : 1 
                                   }}
                                   whileTap={{ 
-                                    scale: socketConnected ? (upvotedDoubts.has(doubt.id) ? 1.0 : 0.95) : 1 
+                                    scale: socketConnected && !pendingVotes.current.has(doubt.id) ? (upvotedDoubts.has(doubt.id) ? 1.0 : 0.95) : 1 
                                   }}
                                   animate={animatingDoubts.has(doubt.id) ? { 
                                     scale: [1, 1.1, 1],
