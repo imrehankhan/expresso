@@ -1,4 +1,4 @@
-Try it out at: https://undoubt.onrender.com
+Try it out at: https://undoubt-ai.vercel.app
 
 To run this project locally,
 
